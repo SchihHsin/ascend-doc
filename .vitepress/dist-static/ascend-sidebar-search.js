@@ -14,8 +14,14 @@
 
   /* ── Search box — appended to <body>, outside Vue's tree ── */
   function insertSearch() {
-    if (document.getElementById('ascend-sidebar-search')) return;
-    if (!document.querySelector('.VPSidebar')) return; // wait for sidebar to render
+    var existing = document.getElementById('ascend-sidebar-search');
+    var sidebar = document.querySelector('.VPSidebar');
+    // Remove on pages without sidebar (e.g. homepage)
+    if (!sidebar) {
+      if (existing) existing.remove();
+      return;
+    }
+    if (existing) return; // already present
 
     var el = document.createElement('div');
     el.id = 'ascend-sidebar-search';

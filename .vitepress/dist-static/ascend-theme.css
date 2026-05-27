@@ -235,6 +235,15 @@
   opacity: 0 !important;
 }
 
+/* 去掉嵌套层级的左边竖线 */
+.VPSidebarItem.level-1 .items,
+.VPSidebarItem.level-2 .items,
+.VPSidebarItem.level-3 .items,
+.VPSidebarItem.level-4 .items,
+.VPSidebarItem.level-5 .items {
+  border-left: none !important;
+}
+
 
 /* ── 5. ARTICLE CONTENT ── */
 .vp-doc {
@@ -627,9 +636,20 @@ details.custom-block[open] summary {
   margin-top: 24px !important;
 }
 
-/* 隐藏 TOC 左侧浮动指示条 */
+/* 隐藏 TOC 左侧浮动指示条和竖线/圆点 */
 .VPDocAsideOutline .outline-marker {
   display: none !important;
+}
+
+.VPDocAsideOutline .content {
+  border-left: none !important;
+  padding-left: 0 !important;
+}
+
+.VPDocAsideOutline ul,
+.VPDocAsideOutline li {
+  list-style: none !important;
+  padding-left: 0 !important;
 }
 
 .VPDocAsideOutline .outline-title {
@@ -709,7 +729,8 @@ details.custom-block[open] summary {
   display: none !important;
 }
 
-/* 侧边栏搜索框 — fixed 挂到 body，贴在侧边栏顶部 */
+/* 侧边栏搜索框 — fixed 挂到 body，贴在侧边栏顶部
+   JS 负责在无侧边栏的页面移除此元素，CSS 只负责样式 */
 #ascend-sidebar-search {
   position: fixed;
   top: calc(var(--vp-nav-height, 64px) + 12px);
@@ -718,11 +739,6 @@ details.custom-block[open] summary {
   z-index: 40;
   box-sizing: border-box;
   padding: 0 20px;
-  /* 只在有侧边栏的页面可见 */
-  display: none;
-}
-
-.has-sidebar #ascend-sidebar-search {
   display: flex;
   align-items: center;
   gap: 8px;
