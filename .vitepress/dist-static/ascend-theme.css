@@ -184,6 +184,11 @@
   color: var(--vp-c-text-3) !important;
 }
 
+/* 所有 item 统一左内边距，避免激活时跳变 */
+.VPSidebarItem > .item {
+  padding-left: 8px !important;
+}
+
 /* Links */
 .VPSidebarItem .link {
   font-size: 13.5px;
@@ -208,7 +213,6 @@
 .VPSidebarItem.level-4.is-active > .item {
   background: linear-gradient(to right, rgba(46, 83, 250, .18), rgba(100, 60, 255, .12)) !important;
   border-radius: 6px !important;
-  padding-left: 8px !important;
 }
 
 /* 激活文字黑色加粗 — 覆盖 VitePress .level-N.is-active>.item .link>.text{color:brand-1} */
