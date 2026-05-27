@@ -245,7 +245,7 @@
   color: #1d2129;
   letter-spacing: -.01em;
   /* Banner background — relative path so Vite bundles it */
-  background: #eef0ff url('../../public/doc-banner.png') no-repeat right top / auto 100%;
+  background: #eef0ff url('/doc-banner.png') no-repeat right top / auto 100%;
   margin: -32px -24px 32px;
   padding: 36px 280px 36px 32px;
   min-height: 90px;
