@@ -50,8 +50,8 @@
       if (!navBox) {
         var contentBody = document.querySelector('.VPNavBar .content-body');
         var menu = contentBody && contentBody.querySelector('.menu');
-        if (contentBody && menu) {
-          contentBody.insertBefore(makeSearchEl('ascend-nav-search'), menu);
+        if (contentBody) {
+          contentBody.appendChild(makeSearchEl('ascend-nav-search'));
         }
       }
     }
