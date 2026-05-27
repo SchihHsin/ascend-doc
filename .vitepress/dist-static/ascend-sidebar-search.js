@@ -1,30 +1,22 @@
 (function () {
-  var logoDone = false;
-  var searchDone = false;
-
   function insertLogo() {
-    if (logoDone) return;
-    // .VPNavBarTitle contains <a class="title">; insert img as first child of that <a>
+    if (document.querySelector('.VPNavBarTitle img')) return; // already there
     var titleLink = document.querySelector('.VPNavBarTitle .title')
                  || document.querySelector('.VPNavBarTitle a');
     if (!titleLink) return;
-    if (titleLink.querySelector('img')) { logoDone = true; return; }
     var img = document.createElement('img');
     img.className = 'logo';
     img.src = '/Ascendlogo.svg';
     img.alt = 'Ascend C';
     titleLink.insertBefore(img, titleLink.firstChild);
-    logoDone = true;
   }
 
   function insertSearch() {
-    if (searchDone) return;
-    // sidebar nav: <nav class="nav" id="VPSidebarNav"> inside <aside class="VPSidebar">
+    if (document.getElementById('ascend-sidebar-search')) return; // already there
     var container = document.getElementById('VPSidebarNav')
                  || document.querySelector('.VPSidebar .nav')
                  || document.querySelector('.VPSidebar nav');
     if (!container) return;
-    if (document.getElementById('ascend-sidebar-search')) { searchDone = true; return; }
     var el = document.createElement('div');
     el.id = 'ascend-sidebar-search';
     el.innerHTML =
@@ -40,10 +32,8 @@
              || document.querySelector('button[aria-label*="搜索"]');
       if (btn) btn.click();
     });
-    // insert after the visually-hidden span (first real content position)
     var firstGroup = container.querySelector('.group') || container.firstChild;
     container.insertBefore(el, firstGroup);
-    searchDone = true;
   }
 
   function tryAll() {
@@ -51,12 +41,13 @@
     insertSearch();
   }
 
-  var mo = new MutationObserver(function () {
-    tryAll();
-    if (logoDone && searchDone) mo.disconnect();
+  // Retry at key moments after Vue mounts
+  [0, 100, 300, 600, 1000, 2000].forEach(function (ms) {
+    setTimeout(tryAll, ms);
   });
-  mo.observe(document.documentElement, { childList: true, subtree: true });
 
-  document.addEventListener('DOMContentLoaded', tryAll);
-  window.addEventListener('load', tryAll);
+  // Also watch for DOM changes (route navigation re-renders sidebar)
+  var mo = new MutationObserver(tryAll);
+  mo.observe(document.documentElement, { childList: true, subtree: true });
+  setTimeout(function () { mo.disconnect(); }, 5000);
 })();
