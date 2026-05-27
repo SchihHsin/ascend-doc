@@ -705,12 +705,30 @@ details.custom-block[open] summary {
   display: none !important;
 }
 
-/* 侧边栏顶部搜索框 */
+/* 侧边栏搜索框 — fixed 挂到 body，贴在侧边栏顶部 */
 #ascend-sidebar-search {
+  position: fixed;
+  top: calc(var(--vp-nav-height, 64px) + 12px);
+  left: 0;
+  width: var(--vp-sidebar-width, 256px);
+  z-index: 40;
+  box-sizing: border-box;
+  padding: 0 20px;
+  /* 只在有侧边栏的页面可见 */
+  display: none;
+}
+
+.has-sidebar #ascend-sidebar-search {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 0 0 14px;
+}
+
+#ascend-sidebar-search > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
   padding: 7px 14px;
   background: #ffffff;
   border: 1px solid rgba(0, 0, 0, .14);
@@ -723,14 +741,15 @@ details.custom-block[open] summary {
   user-select: none;
 }
 
-#ascend-sidebar-search:hover {
+#ascend-sidebar-search > div:hover {
   border-color: rgba(46, 83, 250, .45);
   box-shadow: 0 0 0 3px rgba(46, 83, 250, .08);
   color: #4e5969;
 }
 
-#ascend-sidebar-search svg {
-  flex-shrink: 0;
+/* 给 nav 留出搜索框的高度 */
+.VPSidebar .nav {
+  padding-top: 52px !important;
 }
 
 /* ── 17b. FilterToggle (version select) ── */
