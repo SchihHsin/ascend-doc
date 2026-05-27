@@ -14,23 +14,28 @@ hero:
       link: /guide/入门教程/Ascend-C概述与学习路径
 
 features:
-  - icon: 🚀
+  - icon:
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>'
     title: 入门教程
     details: 从环境准备到 HelloWorld，快速上手 Ascend C 算子开发。
     link: /guide/入门教程/Ascend-C概述与学习路径
-  - icon: 📖
+  - icon:
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>'
     title: 编程指南
     details: SIMD/SIMT 编程模型、编译运行、语言扩展、调试调优完整指南。
     link: /guide/编程指南/本文档组织结构
-  - icon: 🔧
+  - icon:
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>'
     title: 算子实践参考
     details: 功能调试、性能分析、优秀实践案例，覆盖 SIMD/SIMT 算子实现与优化。
     link: /guide/算子实践参考/本文档组织结构
-  - icon: 🔄
+  - icon:
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'
     title: 跨代迁移指南
     details: Ascend C API 兼容策略，2201 到 3510 架构迁移指导。
     link: /guide/跨代迁移兼容性指南/概述
-  - icon: 📦
+  - icon:
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>'
     title: Ascend C API
     details: SIMD API、SIMT API、AI CPU API、Utils API 等完整接口参考。
     link: /api/README
