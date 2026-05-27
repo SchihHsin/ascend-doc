@@ -636,7 +636,7 @@ details.custom-block[open] summary {
   margin-top: 24px !important;
 }
 
-/* 隐藏 TOC 左侧浮动指示条和竖线/圆点 */
+/* 隐藏 TOC 默认浮动指示条 */
 .VPDocAsideOutline .outline-marker {
   display: none !important;
 }
@@ -661,6 +661,41 @@ details.custom-block[open] summary {
   margin-bottom: 8px;
 }
 
+/* TOC 圆点 + 竖线 */
+.VPDocAsideOutline li {
+  position: relative;
+  padding-left: 20px !important;
+}
+
+.VPDocAsideOutline li::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 14px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid #c0c0c8;
+  background: #fff;
+  z-index: 1;
+}
+
+.VPDocAsideOutline li:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 7.5px;
+  top: 23px;
+  bottom: 0;
+  width: 1px;
+  background: #d8d8dd;
+}
+
+.VPDocAsideOutline li .outline-link.active ~ li::before,
+.VPDocAsideOutline li:has(> .outline-link.active)::before {
+  border-color: #1d2129;
+  background: #1d2129;
+}
+
 .VPDocOutlineItem a {
   font-size: 13px;
   color: var(--vp-c-text-2) !important;
@@ -673,8 +708,7 @@ details.custom-block[open] summary {
   border-bottom: none !important;
 }
 
-/* TOC 激活态：黑色加粗，无边框
-   VitePress 默认只改 color 为 --vp-c-text-1，无 !important，用以下覆盖 */
+/* TOC 激活态：黑色加粗 */
 .VPDocOutlineItem .outline-link.active,
 .VPDocOutlineItem a.active,
 .outline-link.active {
@@ -770,6 +804,38 @@ details.custom-block[open] summary {
 /* 给 nav 留出搜索框的高度 */
 .VPSidebar .nav {
   padding-top: 52px !important;
+}
+
+/* 首页导航栏搜索框 — 放在 menu tabs 前面 */
+#ascend-nav-search {
+  display: flex;
+  align-items: center;
+  margin-right: 12px;
+  pointer-events: auto;
+}
+
+#ascend-nav-search > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: rgba(0, 0, 0, .04);
+  border: 1px solid rgba(0, 0, 0, .1);
+  border-radius: 20px;
+  cursor: pointer;
+  color: #86909c;
+  font-size: 13px;
+  font-family: var(--vp-font-family-base);
+  transition: border-color .15s, box-shadow .15s, background .15s;
+  user-select: none;
+  white-space: nowrap;
+}
+
+#ascend-nav-search > div:hover {
+  background: rgba(0, 0, 0, .06);
+  border-color: rgba(46, 83, 250, .45);
+  box-shadow: 0 0 0 3px rgba(46, 83, 250, .08);
+  color: #4e5969;
 }
 
 /* ── 17b. FilterToggle (version select) ── */

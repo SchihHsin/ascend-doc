@@ -12,19 +12,10 @@
     a.insertBefore(img, a.firstChild);
   }
 
-  /* ── Search box — appended to <body>, outside Vue's tree ── */
-  function insertSearch() {
-    var existing = document.getElementById('ascend-sidebar-search');
-    var sidebar = document.querySelector('.VPSidebar');
-    // Remove on pages without sidebar (e.g. homepage)
-    if (!sidebar) {
-      if (existing) existing.remove();
-      return;
-    }
-    if (existing) return; // already present
-
+  /* ── Search box ── */
+  function makeSearchEl(id) {
     var el = document.createElement('div');
-    el.id = 'ascend-sidebar-search';
+    el.id = id;
     el.innerHTML =
       '<div><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"' +
       ' fill="none" stroke="currentColor" stroke-width="2"' +
@@ -38,7 +29,32 @@
              || document.querySelector('button[aria-label*="搜索"]');
       if (btn) btn.click();
     });
-    document.body.appendChild(el); // outside #app — Vue won't remove it
+    return el;
+  }
+
+  function insertSearch() {
+    var sidebar = document.querySelector('.VPSidebar');
+    var isHome = !!document.querySelector('.VPHome');
+    var sidebarBox = document.getElementById('ascend-sidebar-search');
+    var navBox = document.getElementById('ascend-nav-search');
+
+    if (sidebar && !isHome) {
+      // Sidebar page: fixed search above sidebar
+      if (navBox) navBox.remove();
+      if (!sidebarBox) {
+        document.body.appendChild(makeSearchEl('ascend-sidebar-search'));
+      }
+    } else {
+      // Homepage / no-sidebar: search in nav bar before menu tabs
+      if (sidebarBox) sidebarBox.remove();
+      if (!navBox) {
+        var contentBody = document.querySelector('.VPNavBar .content-body');
+        var menu = contentBody && contentBody.querySelector('.menu');
+        if (contentBody && menu) {
+          contentBody.insertBefore(makeSearchEl('ascend-nav-search'), menu);
+        }
+      }
+    }
   }
 
   function tryAll() { insertLogo(); insertSearch(); }
