@@ -4,9 +4,11 @@
 
   function insertLogo() {
     if (logoDone) return;
-    var titleLink = document.querySelector('.VPNavBarTitle a.title, .VPNavBarTitle .title');
+    // .VPNavBarTitle contains <a class="title">; insert img as first child of that <a>
+    var titleLink = document.querySelector('.VPNavBarTitle .title')
+                 || document.querySelector('.VPNavBarTitle a');
     if (!titleLink) return;
-    if (titleLink.querySelector('img.logo')) { logoDone = true; return; }
+    if (titleLink.querySelector('img')) { logoDone = true; return; }
     var img = document.createElement('img');
     img.className = 'logo';
     img.src = '/Ascendlogo.svg';
@@ -17,9 +19,10 @@
 
   function insertSearch() {
     if (searchDone) return;
-    // VPSidebarNav is the direct items container
-    var container = document.querySelector('.VPSidebarNav')
-                 || document.querySelector('.VPSidebar .nav');
+    // sidebar nav: <nav class="nav" id="VPSidebarNav"> inside <aside class="VPSidebar">
+    var container = document.getElementById('VPSidebarNav')
+                 || document.querySelector('.VPSidebar .nav')
+                 || document.querySelector('.VPSidebar nav');
     if (!container) return;
     if (document.getElementById('ascend-sidebar-search')) { searchDone = true; return; }
     var el = document.createElement('div');
@@ -37,7 +40,9 @@
              || document.querySelector('button[aria-label*="搜索"]');
       if (btn) btn.click();
     });
-    container.insertBefore(el, container.firstChild);
+    // insert after the visually-hidden span (first real content position)
+    var firstGroup = container.querySelector('.group') || container.firstChild;
+    container.insertBefore(el, firstGroup);
     searchDone = true;
   }
 
@@ -50,10 +55,8 @@
     tryAll();
     if (logoDone && searchDone) mo.disconnect();
   });
-
   mo.observe(document.documentElement, { childList: true, subtree: true });
 
-  // also try on DOMContentLoaded and load
   document.addEventListener('DOMContentLoaded', tryAll);
   window.addEventListener('load', tryAll);
 })();
