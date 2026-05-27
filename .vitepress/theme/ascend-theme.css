@@ -697,7 +697,42 @@ details.custom-block[open] summary {
   border-color: #1d2129 !important;
 }
 
-/* ── 17. FilterToggle (version select) ── */
+/* ── 17. Sidebar search ── */
+
+/* 隐藏 navbar 里的搜索按钮 */
+.VPNavBarSearch {
+  display: none !important;
+}
+
+/* 侧边栏顶部搜索框 */
+#ascend-sidebar-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 7px 14px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, .14);
+  border-radius: 20px;
+  cursor: pointer;
+  color: #86909c;
+  font-size: 13px;
+  font-family: var(--vp-font-family-base);
+  transition: border-color .15s, box-shadow .15s;
+  user-select: none;
+}
+
+#ascend-sidebar-search:hover {
+  border-color: rgba(46, 83, 250, .45);
+  box-shadow: 0 0 0 3px rgba(46, 83, 250, .08);
+  color: #4e5969;
+}
+
+#ascend-sidebar-search svg {
+  flex-shrink: 0;
+}
+
+/* ── 17b. FilterToggle (version select) ── */
 .cann-filter-bar {
   margin-left: 12px;
 }
