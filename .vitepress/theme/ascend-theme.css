@@ -184,7 +184,7 @@
   color: var(--vp-c-text-3) !important;
 }
 
-/* Links — VitePress .link 元素本身无 padding，缩进靠 .items 容器 padding-left 叠加 */
+/* Links */
 .VPSidebarItem .link {
   font-size: 13.5px;
   color: var(--vp-c-text-2) !important;
@@ -195,21 +195,29 @@
   color: var(--vp-c-text-1) !important;
 }
 
-/* 激活态：VitePress 在父级 .VPSidebarItem 上加 .is-active，不在 .link 上加 .active */
+/* === 激活态 — 完全接管 VitePress 的 .is-active 状态 ===
+   VitePress 用 .is-active 加在 .VPSidebarItem 上（非 .link），
+   并用 .VPSidebarItem.level-N.is-active > .item .link > .text { color:brand-1 }
+   我们用 !important 覆盖所有变体 */
+
+/* 激活行底色 + 圆角（不加 margin 避免影响 indicator 定位） */
 .VPSidebarItem.is-active > .item {
-  background: linear-gradient(to right, rgba(46, 83, 250, .22), rgba(100, 60, 255, .16)) !important;
+  background: linear-gradient(to right, rgba(46, 83, 250, .2), rgba(100, 60, 255, .14)) !important;
   border-radius: 6px !important;
-  margin: 0 6px !important;
 }
 
-.VPSidebarItem.is-active > .item .text {
+/* 激活文字：覆盖 VitePress 所有层级的 brand-1 蓝色 */
+.VPSidebarItem.is-active .text {
   color: #1d2129 !important;
   font-weight: 700 !important;
 }
 
-/* 隐藏所有 indicator 左侧竖线 */
-.VPSidebarItem .item > .indicator {
-  display: none !important;
+/* indicator 竖线：VitePress 用 left:-17px 绝对定位，
+   需要 background:transparent 覆盖而非 display:none，
+   避免浏览器将 display:block 的 inline style 覆盖掉 CSS display:none */
+.VPSidebarItem .indicator {
+  background: transparent !important;
+  opacity: 0 !important;
 }
 
 
@@ -630,12 +638,15 @@ details.custom-block[open] summary {
   border-bottom: none !important;
 }
 
-/* TOC 激活态：黑色加粗，无任何边框 */
+/* TOC 激活态：黑色加粗，无边框
+   VitePress 默认只改 color 为 --vp-c-text-1，无 !important，用以下覆盖 */
 .VPDocOutlineItem .outline-link.active,
+.VPDocOutlineItem a.active,
 .outline-link.active {
   color: #1d2129 !important;
   font-weight: 700 !important;
   border-bottom: none !important;
+  border-left: none !important;
 }
 
 /* ── 14. DOC FOOTER (Prev / Next cards) ── */
