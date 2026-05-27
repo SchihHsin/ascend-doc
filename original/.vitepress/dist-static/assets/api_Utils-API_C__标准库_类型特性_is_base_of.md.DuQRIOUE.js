@@ -1,0 +1,49 @@
+import{c as s,Q as e,j as n,m as t}from"./chunks/framework.DOi4mjdC.js";const b=JSON.parse('{"title":"is_base_of","description":"","frontmatter":{},"headers":[{"level":1,"title":"is\\\\_base\\\\_of","slug":"is_base_of"},{"level":2,"title":"产品支持情况","slug":"产品支持情况"},{"level":2,"title":"功能说明","slug":"功能说明"},{"level":2,"title":"函数原型","slug":"函数原型"},{"level":2,"title":"参数说明","slug":"参数说明"},{"level":2,"title":"约束说明","slug":"约束说明"},{"level":2,"title":"返回值说明","slug":"返回值说明"},{"level":2,"title":"调用示例","slug":"调用示例"}],"relativePath":"api/Utils-API/C++标准库/类型特性/is_base_of.md","filePath":"api/Utils-API/C++标准库/类型特性/is_base_of.md"}'),l={name:"api/Utils-API/C++标准库/类型特性/is_base_of.md"};function p(i,a,d,r,c,o){return e(),n("div",null,[...a[0]||(a[0]=[t(`<h1 id="is-base-of" tabindex="-1">is_base_of <a class="header-anchor" href="#is-base-of" aria-label="Permalink to &quot;is\\_base\\_of&quot;">​</a></h1><h2 id="产品支持情况" tabindex="-1">产品支持情况 <a class="header-anchor" href="#产品支持情况" aria-label="Permalink to &quot;产品支持情况&quot;">​</a></h2><table tabindex="0"><thead><tr><th>产品</th><th>是否支持</th></tr></thead><tbody><tr><td>Ascend 950PR/Ascend 950DT</td><td>√</td></tr><tr><td>Atlas A3 训练系列产品/Atlas A3 推理系列产品</td><td>√</td></tr><tr><td>Atlas A2 训练系列产品/Atlas A2 推理系列产品</td><td>√</td></tr><tr><td>Atlas 200I/500 A2 推理产品</td><td>x</td></tr><tr><td>Atlas 推理系列产品AI Core</td><td>x</td></tr><tr><td>Atlas 推理系列产品Vector Core</td><td>x</td></tr><tr><td>Atlas 训练系列产品</td><td>x</td></tr></tbody></table><h2 id="功能说明" tabindex="-1">功能说明 <a class="header-anchor" href="#功能说明" aria-label="Permalink to &quot;功能说明&quot;">​</a></h2><p>is_base_of是定义于&lt;type_traits&gt;头文件的一个类型特征工具，它能够在程序编译时检查一个类型是否为另一个类型的基类。本接口可应用在模板元编程、类型检查和条件编译等场景，用于在编译阶段捕获潜在的类型错误，提高代码的鲁棒性。</p><h2 id="函数原型" tabindex="-1">函数原型 <a class="header-anchor" href="#函数原型" aria-label="Permalink to &quot;函数原型&quot;">​</a></h2><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>template &lt;typename Base, typename Derived&gt;</span></span>
+<span class="line"><span>struct is_base_of;</span></span></code></pre></div><h2 id="参数说明" tabindex="-1">参数说明 <a class="header-anchor" href="#参数说明" aria-label="Permalink to &quot;参数说明&quot;">​</a></h2><p><strong>表 1</strong> 模板参数说明</p><table tabindex="0"><thead><tr><th>参数名</th><th>含义</th></tr></thead><tbody><tr><td>Base</td><td>待检查的基类类型，即Base类型是否为Derived类型的基类。</td></tr><tr><td>Derived</td><td>待检查的派生类类型，即Base类型是否为Derived类型的基类。</td></tr></tbody></table><h2 id="约束说明" tabindex="-1">约束说明 <a class="header-anchor" href="#约束说明" aria-label="Permalink to &quot;约束说明&quot;">​</a></h2><p>无</p><h2 id="返回值说明" tabindex="-1">返回值说明 <a class="header-anchor" href="#返回值说明" aria-label="Permalink to &quot;返回值说明&quot;">​</a></h2><p>is_base_of的静态常量成员value用于获取返回的布尔值，is_base_of::value取值如下：</p><ul><li>true：Base类型是Derived类型的基类（包括Base类型和Derived类型为同一类型的情况）。</li><li>false：Base类型不是Derived类型的基类。</li></ul><h2 id="调用示例" tabindex="-1">调用示例 <a class="header-anchor" href="#调用示例" aria-label="Permalink to &quot;调用示例&quot;">​</a></h2><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>class Base {};</span></span>
+<span class="line"><span>class Derived : public Base {};</span></span>
+<span class="line"><span>class Unrelated {};</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>// 虚继承的派生类</span></span>
+<span class="line"><span>class Derived2 : virtual public Base {};</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>// 定义虚继承的派生类</span></span>
+<span class="line"><span>class VirtualDerived : virtual public Base {};</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>// 定义多重继承的派生类</span></span>
+<span class="line"><span>class MultiDerived : public Base, public VirtualDerived {};</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>// 模板基类</span></span>
+<span class="line"><span>template &lt;typename T&gt;</span></span>
+<span class="line"><span>class BaseTemplate {</span></span>
+<span class="line"><span>public:</span></span>
+<span class="line"><span>    T value;</span></span>
+<span class="line"><span>};</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>// 模板派生类</span></span>
+<span class="line"><span>template &lt;typename T&gt;</span></span>
+<span class="line"><span>class DerivedTemplate : public BaseTemplate&lt;T&gt; {};</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>// 检查 Base 是否是 Derived 的基类</span></span>
+<span class="line"><span>AscendC::PRINTF(&quot;Is Base a base of Derived? %d\\n&quot; , AscendC::Std::is_base_of&lt;Base, Derived&gt;::value);</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>// 检查 Derived 是否是 Base 的基类（应该为 false）</span></span>
+<span class="line"><span>AscendC::PRINTF(&quot;Is Derived a base of Base? %d\\n&quot; , AscendC::Std::is_base_of&lt;Derived, Base&gt;::value);</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>// 检查 Base 是否是 Unrelated 的基类（应该为 false）</span></span>
+<span class="line"><span>AscendC::PRINTF(&quot;Is Base a base of Unrelated? %d\\n&quot; , AscendC::Std::is_base_of&lt;Base, Unrelated&gt;::value);</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>AscendC::PRINTF(&quot;Is Base a base of Derived (virtual inheritance)? %d\\n&quot;, AscendC::Std::is_base_of&lt;Base, Derived2&gt;::value);</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>AscendC::PRINTF(&quot;Is BaseTemplate&lt;int&gt; a base of DerivedTemplate&lt;int&gt;? %d\\n&quot;, AscendC::Std::is_base_of&lt;BaseTemplate&lt;int&gt;, DerivedTemplate&lt;int&gt;&gt;::value);</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>// 测试 Base 是否为 VirtualDerived 的基类（虚继承情况）</span></span>
+<span class="line"><span>AscendC::PRINTF(&quot;Is Base a base of VirtualDerived? %d\\n&quot; , AscendC::Std::is_base_of&lt;Base, VirtualDerived&gt;::value);</span></span>
+<span class="line"><span>// 测试 Base 是否为 MultiDerived 的基类（多重继承情况）</span></span>
+<span class="line"><span>AscendC::PRINTF(&quot;Is Base a base of MultiDerived? %d\\n&quot; , AscendC::Std::is_base_of&lt;Base, MultiDerived&gt;::value);</span></span></code></pre></div><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>// 执行结果：</span></span>
+<span class="line"><span>Is Base a base of Derived? 1</span></span>
+<span class="line"><span>Is Derived a base of Base? 0</span></span>
+<span class="line"><span>Is Base a base of Unrelated? 0</span></span>
+<span class="line"><span>Is Base a base of Derived (virtual inheritance)? 1</span></span>
+<span class="line"><span>Is BaseTemplate&lt;int&gt; a base of DerivedTemplate&lt;int&gt;? 1</span></span>
+<span class="line"><span>Is Base a base of VirtualDerived? 1</span></span>
+<span class="line"><span>Is Base a base of MultiDerived? 1</span></span></code></pre></div>`,18)])])}const h=s(l,[["render",p]]);export{b as __pageData,h as default};

@@ -1,0 +1,29 @@
+import{c as a,Q as n,j as s,m as e}from"./chunks/framework.DOi4mjdC.js";const h=JSON.parse('{"title":"Comment","description":"","frontmatter":{},"headers":[{"level":1,"title":"Comment","slug":"comment"},{"level":2,"title":"功能说明","slug":"功能说明"},{"level":2,"title":"函数原型","slug":"函数原型"},{"level":2,"title":"参数说明","slug":"参数说明"},{"level":2,"title":"返回值说明","slug":"返回值说明"},{"level":2,"title":"约束说明","slug":"约束说明"},{"level":2,"title":"调用示例","slug":"调用示例"}],"relativePath":"api/Utils-API/原型注册与管理/OpDef/Comment.md","filePath":"api/Utils-API/原型注册与管理/OpDef/Comment.md"}'),p={name:"api/Utils-API/原型注册与管理/OpDef/Comment.md"};function o(i,t,l,m,c,r){return n(),s("div",null,[...t[0]||(t[0]=[e(`<h1 id="comment" tabindex="-1">Comment <a class="header-anchor" href="#comment" aria-label="Permalink to &quot;Comment&quot;">​</a></h1><h2 id="功能说明" tabindex="-1">功能说明 <a class="header-anchor" href="#功能说明" aria-label="Permalink to &quot;功能说明&quot;">​</a></h2><p>设置算子分组信息以及算子原型注释，包括算子简述，算子约束等内容。用于在自动生成算子原型头文件时，同步生成算子原型注释。</p><p>基于OpDef算子原型定义，自定义算子工程可以实现如下自动化能力：自动生成图模式场景使用的（算子原型头文件），开发者可以使用生成的算子原型进行构图、图编译、图执行等操作。</p><p>生成的注释有助于辅助理解算子原型，并可以基于这些注释自动生成算子原型的文档说明。通常情况下，内置CANN算子使用较多。开发者可以按需使用。</p><h2 id="函数原型" tabindex="-1">函数原型 <a class="header-anchor" href="#函数原型" aria-label="Permalink to &quot;函数原型&quot;">​</a></h2><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>OpDef &amp;Comment(CommentSection section, const char *comment)</span></span></code></pre></div><h2 id="参数说明" tabindex="-1">参数说明 <a class="header-anchor" href="#参数说明" aria-label="Permalink to &quot;参数说明&quot;">​</a></h2><table tabindex="0"><thead><tr><th>参数</th><th>输入/输出</th><th>说明</th></tr></thead><tbody><tr><td>section</td><td>输入</td><td>通过CommentSection类去指定该接口的功能，支持以下几种取值： CATEGORY：表示comment内容设置的是算子分组名称；BRIEF：表示comment内容设置的是算子@brief注释内容，即算子功能的简述；CONSTRAINTS：表示comment内容设置的是算子@Attention Constraints注释内容，即该算子的约束；RESTRICTIONS：表示comment内容设置的是算子@Restrictions注释内容，该选项当前属于试验参数，不推荐使用；SEE：表示comment内容设置的是算子@see注释内容，可以表示该算子的相关算子；THIRDPARTYFWKCOMPAT：表示comment内容设置的是算子参考的第三方算子。</td></tr><tr><td>comment</td><td>输入</td><td>增加comment注释。</td></tr></tbody></table><h2 id="返回值说明" tabindex="-1">返回值说明 <a class="header-anchor" href="#返回值说明" aria-label="Permalink to &quot;返回值说明&quot;">​</a></h2><p>OpDef算子定义，OpDef请参考<a href="./OpDef.html">OpDef</a>。</p><h2 id="约束说明" tabindex="-1">约束说明 <a class="header-anchor" href="#约束说明" aria-label="Permalink to &quot;约束说明&quot;">​</a></h2><p>当用户使用CATEGORY参数设置算子分组名称时，会对应生成同名的代码文件。若文件名过长在编译时可能超过tar的打包文件名称长度限制，导致报错。</p><p>具体参考<a href="https://gitcode.com/cann/asc-devkit/blob/master/docs/guide/%E7%BC%96%E7%A8%8B%E6%8C%87%E5%8D%97/%E9%99%84%E5%BD%95/FAQ/%E7%AE%97%E5%AD%90%E5%B7%A5%E7%A8%8B%E7%BC%96%E8%AF%91%E6%97%B6%E5%87%BA%E7%8E%B0%E6%96%87%E4%BB%B6%E5%90%8D%E8%BF%87%E9%95%BF%E6%8A%A5%E9%94%99.md" target="_blank" rel="noreferrer">算子工程编译时出现文件名过长报错</a>。</p><h2 id="调用示例" tabindex="-1">调用示例 <a class="header-anchor" href="#调用示例" aria-label="Permalink to &quot;调用示例&quot;">​</a></h2><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span> AddCustomComment(const char* name) : OpDef(name)</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>	this-&gt;Comment(CommentSection::CATEGORY, &quot;catg&quot;); // 算子分组</span></span>
+<span class="line"><span>	this-&gt;Comment(CommentSection::BRIEF, &quot;Brief cmt&quot;) // BRIEF注释</span></span>
+<span class="line"><span>	        .Comment(CommentSection::CONSTRAINTS, &quot;Constraints cmt1&quot;) // CONSTRAINTS注释</span></span>
+<span class="line"><span>	        .Comment(CommentSection::CONSTRAINTS, &quot;Constraints cmt2&quot;);</span></span>
+<span class="line"><span>	this-&gt;Comment(CommentSection::RESTRICTIONS, &quot;Restrictions cmt1&quot;) // RESTRICTIONS注释</span></span>
+<span class="line"><span>		.Comment(CommentSection::RESTRICTIONS, &quot;Restrictions cmt2&quot;)</span></span>
+<span class="line"><span>		.Comment(CommentSection::THIRDPARTYFWKCOMPAT, &quot;Third-party framework compatibility cmt1&quot;) // THIRDPARTYFWKCOMPAT注释</span></span>
+<span class="line"><span>		.Comment(CommentSection::THIRDPARTYFWKCOMPAT, &quot;Third-party framework compatibility cmt2&quot;)</span></span>
+<span class="line"><span>		.Comment(CommentSection::SEE, &quot;See cmt1&quot;)// SEE注释</span></span>
+<span class="line"><span>		.Comment(CommentSection::SEE, &quot;See cmt2&quot;);</span></span>
+<span class="line"><span>	this-&gt;Input(&quot;x&quot;)</span></span>
+<span class="line"><span>		.ParamType(REQUIRED)</span></span>
+<span class="line"><span>		.DataType({ge::DT_FLOAT, ge::DT_INT32})</span></span>
+<span class="line"><span>		.FormatList({ge::FORMAT_ND});</span></span>
+<span class="line"><span>	this-&gt;Input(&quot;y&quot;)</span></span>
+<span class="line"><span>		.ParamType(REQUIRED)</span></span>
+<span class="line"><span>		.DataType({ge::DT_FLOAT, ge::DT_INT32})</span></span>
+<span class="line"><span>		.FormatList({ge::FORMAT_ND});</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>	this-&gt;Output(&quot;z&quot;)</span></span>
+<span class="line"><span>		.ParamType(REQUIRED)</span></span>
+<span class="line"><span>		.DataType({ge::DT_FLOAT, ge::DT_INT32})</span></span>
+<span class="line"><span>		.FormatList({ge::FORMAT_ND});</span></span>
+<span class="line"><span>	this-&gt;AICore()</span></span>
+<span class="line"><span>		.SetTiling(optiling::TilingFunc);</span></span>
+<span class="line"><span>	this-&gt;AICore().AddConfig(&quot;ascendxxx&quot;);</span></span>
+<span class="line"><span>}</span></span></code></pre></div>`,16)])])}const u=a(p,[["render",o]]);export{h as __pageData,u as default};

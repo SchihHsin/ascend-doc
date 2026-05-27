@@ -1,0 +1,386 @@
+import{c as s,Q as a,j as p,m as l}from"./chunks/framework.DOi4mjdC.js";const m=JSON.parse('{"title":"含有Matmul高阶API的算子精度问题","description":"","frontmatter":{},"headers":[{"level":1,"title":"含有Matmul高阶API的算子精度问题","slug":"含有matmul高阶api的算子精度问题"}],"relativePath":"guide/编程指南/附录/FAQ/含有Matmul高阶API的算子精度问题.md","filePath":"guide/编程指南/附录/FAQ/含有Matmul高阶API的算子精度问题.md"}'),e={name:"guide/编程指南/附录/FAQ/含有Matmul高阶API的算子精度问题.md"};function i(t,n,c,o,r,g){return a(),p("div",null,[...n[0]||(n[0]=[l(`<h1 id="含有matmul高阶api的算子精度问题" tabindex="-1">含有Matmul高阶API的算子精度问题 <a class="header-anchor" href="#含有matmul高阶api的算子精度问题" aria-label="Permalink to &quot;含有Matmul高阶API的算子精度问题&quot;">​</a></h1><p>本节针对含有Matmul高阶API的算子，为排查算子精度问题是否为算子中Matmul高阶API调用方式导致，提供初步的问题定界和定位指导。如未特殊说明，下面均以Atlas A2 训练系列产品/Atlas A2 推理系列产品上的案例为例。</p><p>具体排查过程主要有如下六个步骤：</p><ol><li>CPU域调试，观察报错信息；</li><li>Matmul Tiling是否有修改，修改是否合理；</li><li>算子隐藏Vector计算，仅调用Matmul API，算子功能是否正确；</li><li>单核执行，算子功能是否正确；</li><li>排查Matmul API的使用是否正确；</li><li>用于算子调测的golden脚本是否正确。</li></ol><p>详细说明如下：</p><ol><li><p><strong>CPU域调试，观察报错信息</strong></p><p>在完成算子代码的开发后，优先通过<a href="./../基于样例工程完成Kernel直调.html#section883611324486">Kernel直调中的CPU调测工程</a>，调试算子的功能。在CPU域调试时，若编译或执行报错，日志中一般会有明显的报错信息。根据报错信息的提示内容，通常可以快速定位到问题所对应的代码位置。这种方法尤其对DataCopy参数设置错误导致的地址越界、算子Tiling参数设置不正确、其他内存越界访问等基础参数的使用问题，可以快速定位到具体原因。</p><ol><li><p>案例：</p><p>以下为matmul算子核函数的代码片段。该段代码实现了根据Global Memory上的A、B矩阵和Tiling信息，计算每个核要使用数据的地址偏移、创建Matmul对象，计算得到Matmul结果。</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>extern &quot;C&quot; __global__ __aicore__ void matmul_custom(GM_ADDR a, GM_ADDR b, GM_ADDR c, GM_ADDR workspace, GM_ADDR tilingGm)</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>    using A_T = half;</span></span>
+<span class="line"><span>    using B_T = half;</span></span>
+<span class="line"><span>    using C_T = float;</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    AscendC::TPipe pipe;</span></span>
+<span class="line"><span>    TCubeTiling tiling;</span></span>
+<span class="line"><span>    CopyTiling(&amp;tiling, tilingGm);</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    AscendC::GlobalTensor&lt;A_T&gt; aGlobal;</span></span>
+<span class="line"><span>    AscendC::GlobalTensor&lt;B_T&gt; bGlobal;</span></span>
+<span class="line"><span>    AscendC::GlobalTensor&lt;C_T&gt; cGlobal;</span></span>
+<span class="line"><span>    aGlobal.SetGlobalBuffer(reinterpret_cast&lt;__gm__ A_T *&gt;(a), tiling.M * tiling.Ka);</span></span>
+<span class="line"><span>    bGlobal.SetGlobalBuffer(reinterpret_cast&lt;__gm__ B_T *&gt;(b), tiling.Ka * tiling.N);</span></span>
+<span class="line"><span>    cGlobal.SetGlobalBuffer(reinterpret_cast&lt;__gm__ C_T *&gt;(c), tiling.M * tiling.N);</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    int offsetA = 0;</span></span>
+<span class="line"><span>    int offsetB = 0;</span></span>
+<span class="line"><span>    int offsetC = 0;</span></span>
+<span class="line"><span>    bool isTransA = false;</span></span>
+<span class="line"><span>    bool isTransB = true;</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    int tailM = 0;</span></span>
+<span class="line"><span>    int tailN = 0;</span></span>
+<span class="line"><span>    CalcGMOffset(GetBlockIdx(), tiling, offsetA, offsetB, offsetC, tailM, tailN, isTransA, isTransB);</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    auto gmA = aGlobal[offsetA];</span></span>
+<span class="line"><span>    auto gmB = bGlobal[offsetB];</span></span>
+<span class="line"><span>    auto gmC = cGlobal[offsetC];</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    AscendC::Matmul&lt;AscendC::MatmulType&lt;AscendC::TPosition::GM, CubeFormat::ND, A_T&gt;,</span></span>
+<span class="line"><span>           AscendC::MatmulType&lt;AscendC::TPosition::GM, CubeFormat::ND, B_T&gt;,</span></span>
+<span class="line"><span>           AscendC::MatmulType&lt;AscendC::TPosition::GM, CubeFormat::ND, C_T&gt;&gt; mm;</span></span>
+<span class="line"><span>    REGIST_MATMUL_OBJ(&amp;pipe, GetSysWorkSpacePtr(), mm, &amp;tiling);</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    mm.SetTensorA(gmA, isTransA);</span></span>
+<span class="line"><span>    mm.SetTensorB(gmB, isTransB);</span></span>
+<span class="line"><span>    mm.SetTail(tailM, tailN);</span></span>
+<span class="line"><span>    mm.IterateAll(gmC);</span></span>
+<span class="line"><span>    mm.End();</span></span>
+<span class="line"><span>}</span></span></code></pre></div><p>以下为上述代码在CPU域调试时输出的执行结果。以下示例中的路径请以实际情况为准。</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>[ASSERT] $HOME/Ascend/xxxxx/include/ascendc/highlevel_api/lib/matmul/matmul_client.h:268: Assertion \`isTransposeB &lt;= B_TYPE::isTrans &amp;&amp; &quot;It is not allowed to do B transpose when matmul B transpose is not defined.&quot;&#39;</span></span>
+<span class="line"><span>[ASSERT] $HOME/Ascend/xxxxx/include/ascendc/highlevel_api/lib/matmul/matmul_client.h:268: Assertion \`isTransposeB &lt;= B_TYPE::isTrans &amp;&amp; &quot;It is not allowed to do B transpose when matmul B transpose is not defined.&quot;&#39;</span></span></code></pre></div><p>本案例中的算子有精度问题，于是使用CPU调测该算子功能，CPU运行后，根据报错信息提示的矩阵B的transpose未定义，查看矩阵B的相关设置代码，发现Matmul对象定义时未设置矩阵B的B_TYPE::isTrans，而SetTensorB接口设置了isTransB = true，导致执行报错。所以，此问题的根因为SetTensorB设置的isTransB值与B_TYPE不符。</p></li></ol></li><li><p><strong>Matmul Tiling是否有修改，修改是否合理</strong></p><p>一般含有Matmul的算子Tiling实现中，通过调用<a href="https://gitcode.com/cann/asc-devkit/blob/master/docs/api/context/GetTiling.md" target="_blank" rel="noreferrer">GetTiling</a>接口获取Matmul Tiling，其数据类型为<a href="https://gitcode.com/cann/asc-devkit/blob/master/docs/api/context/TCubeTiling%E7%BB%93%E6%9E%84%E4%BD%93.md" target="_blank" rel="noreferrer">TCubeTiling</a>结构体，这时这组Tiling值是合法的。某些情况下，用户自定义了一组TCubeTiling参数值，或者，基于<a href="https://gitcode.com/cann/asc-devkit/blob/master/docs/api/context/GetTiling.md" target="_blank" rel="noreferrer">GetTiling</a>接口返回的TCubeTiling，自行修改了其中的部分值，这样的修改需要满足参数间的制约条件。</p><p>为获取所有Tiling参数值，需要打印Tiling参数相关的日志。设置日志环境变量，获取MatmulTiling参数值。设置环境变量的命令如下：</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>export ASCEND_GLOBAL_LOG_LEVEL=1</span></span>
+<span class="line"><span>export ASCEND_SLOG_PRINT_TO_STDOUT=1</span></span></code></pre></div><p>在日志中搜索“MatmulTiling”关键字，参照<a href="https://gitcode.com/cann/asc-devkit/blob/master/docs/api/context/TCubeTiling%E7%BB%93%E6%9E%84%E4%BD%93.md" target="_blank" rel="noreferrer">TCubeTiling约束条件</a>，检查Tiling取值是否合法。若不满足某条约束条件，需要修改对应的相关参数，使该组TCubeTiling参数值均合法。</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>cat test_tiling.log |grep MatmulTiling // test_tiling.log为示例日志文件名</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.864 [matmul_tiling_base.cpp:697][PrintTilingDataInfo] MatmulTiling: M             = 1024</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.870 [matmul_tiling_base.cpp:698][PrintTilingDataInfo] MatmulTiling: N             = 640</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.873 [matmul_tiling_base.cpp:699][PrintTilingDataInfo] MatmulTiling: Ka            = 256</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.876 [matmul_tiling_base.cpp:700][PrintTilingDataInfo] MatmulTiling: Kb            = 256</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.879 [matmul_tiling_base.cpp:701][PrintTilingDataInfo] MatmulTiling: singleCoreM   = 512</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.882 [matmul_tiling_base.cpp:702][PrintTilingDataInfo] MatmulTiling: singleCoreN   = 640</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.884 [matmul_tiling_base.cpp:703][PrintTilingDataInfo] MatmulTiling: singleCoreK   = 256</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.887 [matmul_tiling_base.cpp:704][PrintTilingDataInfo] MatmulTiling: baseM         = 256</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.890 [matmul_tiling_base.cpp:705][PrintTilingDataInfo] MatmulTiling: baseN         = 128</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.893 [matmul_tiling_base.cpp:706][PrintTilingDataInfo] MatmulTiling: baseK         = 64</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.896 [matmul_tiling_base.cpp:707][PrintTilingDataInfo] MatmulTiling: depthA1       = 10</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.899 [matmul_tiling_base.cpp:708][PrintTilingDataInfo] MatmulTiling: depthB1       = 2</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.902 [matmul_tiling_base.cpp:709][PrintTilingDataInfo] MatmulTiling: depthAL1CacheUB     = 0</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.905 [matmul_tiling_base.cpp:710][PrintTilingDataInfo] MatmulTiling: depthBL1CacheUB     = 0</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.908 [matmul_tiling_base.cpp:711][PrintTilingDataInfo] MatmulTiling: stepM         = 2</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.912 [matmul_tiling_base.cpp:712][PrintTilingDataInfo] MatmulTiling: stepN         = 1</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.915 [matmul_tiling_base.cpp:713][PrintTilingDataInfo] MatmulTiling: isBias        = 1</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.917 [matmul_tiling_base.cpp:714][PrintTilingDataInfo] MatmulTiling: transLength   = 0</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.920 [matmul_tiling_base.cpp:715][PrintTilingDataInfo] MatmulTiling: iterateOrder  = 0</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.923 [matmul_tiling_base.cpp:716][PrintTilingDataInfo] MatmulTiling: shareMode     = 0</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.926 [matmul_tiling_base.cpp:717][PrintTilingDataInfo] MatmulTiling: usedL1Size    = 295424</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.929 [matmul_tiling_base.cpp:718][PrintTilingDataInfo] MatmulTiling: usedL0CSize   = 131072</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.932 [matmul_tiling_base.cpp:719][PrintTilingDataInfo] MatmulTiling: usedUBSize    = 0</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.935 [matmul_tiling_base.cpp:720][PrintTilingDataInfo] MatmulTiling: batchM        = 1</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.938 [matmul_tiling_base.cpp:721][PrintTilingDataInfo] MatmulTiling: batchN        = 1</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.941 [matmul_tiling_base.cpp:722][PrintTilingDataInfo] MatmulTiling: singleBatchM  = 1</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.943 [matmul_tiling_base.cpp:723][PrintTilingDataInfo] MatmulTiling: singleBatchN  = 1</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.946 [matmul_tiling_base.cpp:724][PrintTilingDataInfo] MatmulTiling: stepKa        = 4</span></span>
+<span class="line"><span>[INFO] ASCENDCKERNEL(1202803,ascendc_kernels_bbit):2024-10-12-08:53:59.636.949 [matmul_tiling_base.cpp:725][PrintTilingDataInfo] MatmulTiling: stepKb        = 1</span></span></code></pre></div><p>例如，根据如上打印出的TCubeTiling参数，对照<a href="https://gitcode.com/cann/asc-devkit/blob/master/docs/api/context/TCubeTiling%E7%BB%93%E6%9E%84%E4%BD%93.md" target="_blank" rel="noreferrer">TCubeTiling约束条件</a>查看各个参数的取值，depthA1的取值应该等于stepM*stepKa或者stepM*stepKa*2，而depthA1的取值为10，既不等于stepM*stepKa=8，也不等于stepM*stepKa*2=16，不满足约束条件，因此需要校正depthA1的值。</p></li><li><p><strong>算子隐藏Vector计算，仅调用Matmul API，算子功能是否正确</strong></p><p>融合算子的代码既包含Matmul API，也包含Vector计算API。通过在算子代码中删除Vector计算API，只保留Matmul API，快速定界是否为Matmul API的错误使用导致了融合算子的精度问题。具体排查过程为：修改算子代码逻辑，删除Vector计算的代码，同步完成golden脚本相应修改，完成适配修改后，<a href="./../基于样例工程完成Kernel直调.html">CPU域或NPU域上执行算子</a>，观察算子结果是否正确。若算子结果正确，说明代码中Matmul API的使用方式正确，需要继续排查Vector计算是否正确；反之，若算子结果不正确，需要继续排查Matmul API的使用是否正确。</p><ul><li><p>案例：</p><p>以融合算子matmul_leakyrelu为例，执行算子后，出现如下图所示的精度问题。</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>data index: 000195, expected: -0.693000019, actual: -69.300003052, rdiff: -99.000000</span></span>
+<span class="line"><span>data index: 000196, expected: -0.209000006, actual: -20.899999619, rdiff: -99.000000</span></span>
+<span class="line"><span>data index: 000197, expected: -0.517000020, actual: -51.700000763, rdiff: -99.000000</span></span>
+<span class="line"><span>data index: 000200, expected: -0.193000004, actual: -19.300001144, rdiff: -99.000000</span></span>
+<span class="line"><span>data index: 000202, expected: -0.684000015, actual: -68.400001526, rdiff: -99.000000</span></span>
+<span class="line"><span>data index: 000204, expected: -0.422000021, actual: -42.200000763, rdiff: -98.999992</span></span>
+<span class="line"><span>data index: 000209, expected: -0.109000005, actual: -10.900000572, rdiff: -99.000000</span></span>
+<span class="line"><span>error ratio: 0.4517, tolerance: 0.0001</span></span>
+<span class="line"><span>[ERROR] result error</span></span></code></pre></div><p>修改算子代码，注释屏蔽LeakyRelu API计算，同时，需要适配修改相应的内存分配和涉及的同步等代码；然后，注释golden脚本中LeakyRelu计算，具体修改示例如下。</p><p>以下代码为算子核函数的代码片段。</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>template &lt;typename aType, typename bType, typename cType, typename biasType&gt;</span></span>
+<span class="line"><span>__aicore__ inline void MatmulLeakyKernel&lt;aType, bType, cType, biasType&gt;::Process(AscendC::TPipe *pipe)</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>    uint32_t computeRound = 0;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    matmulObj.SetTensorA(aGlobal);</span></span>
+<span class="line"><span>    matmulObj.SetTensorB(bGlobal);</span></span>
+<span class="line"><span>    matmulObj.SetBias(biasGlobal);</span></span>
+<span class="line"><span>    while (matmulObj.template Iterate&lt;true&gt;()) {</span></span>
+<span class="line"><span>        MatmulCompute();</span></span>
+<span class="line"><span>        // LeakyReluCompute();</span><span> // 注释LeakyReluCompute Vector计算</span></span>
+<span class="line"><span>        CopyOut(computeRound);</span></span>
+<span class="line"><span>        computeRound++;</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>    matmulObj.End();</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>template &lt;typename aType, typename bType, typename cType, typename biasType&gt;</span></span>
+<span class="line"><span>__aicore__ inline void MatmulLeakyKernel&lt;aType, bType, cType, biasType&gt;::MatmulCompute()</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>    reluOutLocal = reluOutQueue_.AllocTensor&lt;cType&gt;();</span></span>
+<span class="line"><span>    matmulObj.template GetTensorC&lt;true&gt;(reluOutLocal, false, true);</span></span>
+<span class="line"><span>    reluOutQueue_.EnQue(reluOutLocal); // 将LeakyReluCompute()接口里的reluOutLocal结果输出提前到这里</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>template &lt;typename aType, typename bType, typename cType, typename biasType&gt;</span></span>
+<span class="line"><span>__aicore__ inline void MatmulLeakyKernel&lt;aType, bType, cType, biasType&gt;::LeakyReluCompute()</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>    LeakyRelu(reluOutLocal, reluOutLocal, (cType)0.1, tiling.baseM * tiling.baseN);</span></span>
+<span class="line"><span>    reluOutQueue_.EnQue(reluOutLocal);</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>template &lt;typename aType, typename bType, typename cType, typename biasType&gt;</span></span>
+<span class="line"><span>__aicore__ inline void MatmulLeakyKernel&lt;aType, bType, cType, biasType&gt;::CopyOut(uint32_t count)</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>    reluOutQueue_.DeQue&lt;cType&gt;();</span></span>
+<span class="line"><span>    const uint32_t roundM = tiling.singleCoreM / tiling.baseM;</span></span>
+<span class="line"><span>    const uint32_t roundN = tiling.singleCoreN / tiling.baseN;</span></span>
+<span class="line"><span>    uint32_t startOffset = (count % roundM * tiling.baseM * tiling.N + count / roundM * tiling.baseN);</span></span>
+<span class="line"><span>    AscendC::DataCopyParams copyParam = {(uint16_t)tiling.baseM, (uint16_t)(tiling.baseN * sizeof(cType) / AscendC::DEFAULT_C0_SIZE), 0,</span></span>
+<span class="line"><span>                                (uint16_t)((tiling.N - tiling.baseN) * sizeof(cType) / AscendC::DEFAULT_C0_SIZE)};</span></span>
+<span class="line"><span>    DataCopy(cGlobal[startOffset], reluOutLocal, copyParam);</span></span>
+<span class="line"><span>    reluOutQueue_.FreeTensor(reluOutLocal);</span></span>
+<span class="line"><span>}</span></span></code></pre></div><p>以下代码为golden生成脚本的代码片段。</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>def gen_golden_data():</span></span>
+<span class="line"><span>    M = 1024</span></span>
+<span class="line"><span>    N = 640</span></span>
+<span class="line"><span>    K = 256</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    input_a = np.random.randint(-10, 10, [M, K]).astype(np.float16)</span></span>
+<span class="line"><span>    input_b = np.random.randint(-10, 10, [K, N]).astype(np.float16)</span></span>
+<span class="line"><span>    input_bias = np.random.randint(-10, 10, [N]).astype(np.float32)</span></span>
+<span class="line"><span>    alpha = 0.001</span></span>
+<span class="line"><span>    golden = (np.matmul(input_a.astype(np.float32), input_b.astype(np.float32)) + input_bias).astype(np.float32)</span></span>
+<span class="line"><span>    # golden = np.where(golden &gt;= 0, golden, golden * alpha) # 与kernel保持一致，golden生成也需注释相应的LeakyRelu计算</span></span>
+<span class="line"><span>    os.system(&quot;mkdir -p input&quot;)</span></span>
+<span class="line"><span>    os.system(&quot;mkdir -p output&quot;)</span></span>
+<span class="line"><span>    input_a.tofile(&quot;./input/x1_gm.bin&quot;)</span></span>
+<span class="line"><span>    input_b.tofile(&quot;./input/x2_gm.bin&quot;)</span></span>
+<span class="line"><span>    input_bias.tofile(&quot;./input/bias.bin&quot;)</span></span>
+<span class="line"><span>    golden.tofile(&quot;./output/golden.bin&quot;)</span></span></code></pre></div><p>删除LeakyRelu计算后，执行用例，算子结果比对正确，如下所示。</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>-- Installing: $HOME/samples/Precision_Check_Guide/samples-master/operator/MatmulLeakyReluCustomSample/KernelLaunch/MatmulLeakyReluInvocation_cube_vec/out/bin/ascendc_kernels_bbit</span></span>
+<span class="line"><span>8901941eee314bcd64d24ff5f8d21247  output/golden.bin</span></span>
+<span class="line"><span>8901941eee314bcd64d24ff5f8d21247  output/output.bin</span></span>
+<span class="line"><span>error ratio: 0.0000, tolerance: 0.0001</span></span>
+<span class="line"><span>test pass</span></span></code></pre></div><p>由此可确定，算子代码中已正确使用Matmul API，并得到了正确的Matmul API计算结果，需要继续定位LeakyReluCompute函数内LeakyRelu接口使用中存在的问题。</p></li></ul></li><li><p><strong>单核执行，算子功能是否正确</strong></p><p>验证单核场景下算子的功能是否正确，可以帮助快速定界是Matmul API的计算结果不符合预期，还是算子代码中错误调用Matmul API导致。由于Matmul API内部实现的是单核的计算逻辑，所以单核的计算结果正确，而多核的计算结果错误的情况，说明单核上的Matmul API的使用及计算正确，这时需要排查与多核切分相关的代码逻辑是否正确，比如每个核的输入和输出地址偏移是否正确，每个核上的尾块地址设置是否正确。如果验证单核场景下，算子精度不正确，需要排查Matmul API的使用是否正确，具体可参考<a href="#li1950561483219">步骤5</a>。</p><p>提示，包含Matmul的算子的Tiling实现中，Matmul的多核Tiling需要使用MultiCoreMatmulTiling构造多核Tiling对象，通过SetDim接口设置Matmul计算所用的核数。注意：这里设置的核数为Matmul计算所用的核数，仅在多核场景下设置，用于计算tiling参数。如下两个案例为MIX模式的算子，SetDim的设置规则请参考<a href="./../../../算子实践参考/SIMD算子实现/融合算子编程/CV融合/算子实现.html#zh-cn_topic_0000001644252364_li4790115115920">MIX场景核数设置规则</a>。</p><ul><li><p>案例1：多核切分场景，输出地址偏移不正确</p><p>以M=512，N=1024，K=512的Matmul为例，MIX模式的算子代码中设置AIC核数为4，AIV核数为8，因为本案例以分离模式为例，所以SetDim设置为AIV核数的取值8。多核场景下执行该算子，计算结果精度错误。</p><p>以下为算子Tiling计算的代码片段。</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>uint8_t *GenerateTiling(const char *socVersion)</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>    int M = 512;</span></span>
+<span class="line"><span>    int N = 1024;</span></span>
+<span class="line"><span>    int K = 512;</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    TPosition leftPosition = TPosition::GM;</span></span>
+<span class="line"><span>    CubeFormat leftFormat = CubeFormat::ND;</span></span>
+<span class="line"><span>    DataType leftDtype = DataType::DT_FLOAT16;</span></span>
+<span class="line"><span>    bool isTransA = false;</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    TPosition rightPosition = TPosition::GM;</span></span>
+<span class="line"><span>    CubeFormat rightFormat = CubeFormat::ND;</span></span>
+<span class="line"><span>    DataType rightDtype = DataType::DT_FLOAT16;</span></span>
+<span class="line"><span>    bool isTransB = false;</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    TPosition resultPosition = TPosition::GM;</span></span>
+<span class="line"><span>    CubeFormat resultFormat = CubeFormat::ND;</span></span>
+<span class="line"><span>    DataType resultDtype = DataType::DT_FLOAT;</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    bool isBias = false;</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    int usedCoreNum = 8;</span></span>
+<span class="line"><span>    int32_t baseM = 128;</span></span>
+<span class="line"><span>    int32_t baseN = 256;</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    optiling::TCubeTiling tilingData;</span></span>
+<span class="line"><span>    auto ascendcPlatform = platform_ascendc::PlatformAscendCManager::GetInstance(socVersion);</span></span>
+<span class="line"><span>    MultiCoreMatmulTiling tilingApi(*ascendcPlatform);</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    tilingApi.SetDim(usedCoreNum); // 设置为AIV核数8</span></span>
+<span class="line"><span>    tilingApi.SetAType(leftPosition, leftFormat, leftDtype, isTransA);</span></span>
+<span class="line"><span>    tilingApi.SetBType(rightPosition, rightFormat, rightDtype, isTransB);</span></span>
+<span class="line"><span>    tilingApi.SetCType(resultPosition, resultFormat, resultDtype);</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    tilingApi.SetOrgShape(M, N, K);</span></span>
+<span class="line"><span>    tilingApi.SetShape(M, N, K);</span></span>
+<span class="line"><span>    tilingApi.SetFixSplit(baseM, baseN, -1);</span></span>
+<span class="line"><span>    tilingApi.SetBias(isBias);</span></span>
+<span class="line"><span>    tilingApi.SetBufferSpace(-1, -1, -1);</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    int64_t res = tilingApi.GetTiling(tilingData);</span></span>
+<span class="line"><span>    if (res == -1) {</span></span>
+<span class="line"><span>        std::cout &lt;&lt; &quot;gen tiling failed&quot; &lt;&lt; std::endl;</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>    return GetTilingBuf(&amp;tilingData);</span></span>
+<span class="line"><span>}</span></span></code></pre></div><p>以下为算子核函数的代码片段。</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>__aicore__ inline void CalcGMOffset(int blockIdx, const TCubeTiling &amp;tiling, int &amp;offsetA, int &amp;offsetB, int &amp;offsetC,</span></span>
+<span class="line"><span>                                    int &amp;tailM, int &amp;tailN, bool isTransA, bool isTransB)</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>    uint32_t mSingleBlocks = CeilDiv(tiling.M, tiling.singleCoreM);</span></span>
+<span class="line"><span>    uint32_t mCoreIndx = blockIdx % mSingleBlocks;</span></span>
+<span class="line"><span>    uint32_t nCoreIndx = blockIdx / mSingleBlocks;</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    offsetA = mCoreIndx * tiling.Ka * tiling.singleCoreM;</span></span>
+<span class="line"><span>    if (isTransA) {</span></span>
+<span class="line"><span>        offsetA = mCoreIndx * tiling.singleCoreM;</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>    offsetB = nCoreIndx * tiling.singleCoreN;</span></span>
+<span class="line"><span>    if (isTransB) {</span></span>
+<span class="line"><span>        offsetB = nCoreIndx * tiling.Kb * tiling.singleCoreN;</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>    offsetC = mCoreIndx * tiling.singleCoreN * tiling.singleCoreM + nCoreIndx * tiling.singleCoreN; //此处的tiling.singleCoreN参数错误，应为tiling.N </span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    tailM = tiling.M - mCoreIndx * tiling.singleCoreM;</span></span>
+<span class="line"><span>    tailM = tailM &lt; tiling.singleCoreM ? tailM : tiling.singleCoreM;</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    tailN = tiling.N - nCoreIndx * tiling.singleCoreN;</span></span>
+<span class="line"><span>    tailN = tailN &lt; tiling.singleCoreN ? tailN : tiling.singleCoreN;</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>extern &quot;C&quot; __global__ __aicore__ void matmul_custom(GM_ADDR a, GM_ADDR b, GM_ADDR c, GM_ADDR workspace,</span></span>
+<span class="line"><span>                                                    GM_ADDR tilingGm)</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>    using A_T = half;</span></span>
+<span class="line"><span>    using B_T = half;</span></span>
+<span class="line"><span>    using C_T = float;</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    AscendC::TPipe pipe;</span></span>
+<span class="line"><span>    TCubeTiling tiling;</span></span>
+<span class="line"><span>    CopyTiling(&amp;tiling, tilingGm);</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    AscendC::GlobalTensor&lt;A_T&gt; aGlobal;</span></span>
+<span class="line"><span>    AscendC::GlobalTensor&lt;B_T&gt; bGlobal;</span></span>
+<span class="line"><span>    AscendC::GlobalTensor&lt;C_T&gt; cGlobal;</span></span>
+<span class="line"><span>    aGlobal.SetGlobalBuffer(reinterpret_cast&lt;__gm__ A_T *&gt;(a), tiling.M * tiling.Ka);</span></span>
+<span class="line"><span>    bGlobal.SetGlobalBuffer(reinterpret_cast&lt;__gm__ B_T *&gt;(b), tiling.Ka * tiling.N);</span></span>
+<span class="line"><span>    cGlobal.SetGlobalBuffer(reinterpret_cast&lt;__gm__ C_T *&gt;(c), tiling.M * tiling.N);</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    int offsetA = 0;</span></span>
+<span class="line"><span>    int offsetB = 0;</span></span>
+<span class="line"><span>    int offsetC = 0;</span></span>
+<span class="line"><span>    bool isTransA = false;</span></span>
+<span class="line"><span>    bool isTransB = false;</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    int tailM = 0;</span></span>
+<span class="line"><span>    int tailN = 0;</span></span>
+<span class="line"><span>    CalcGMOffset(GetBlockIdx(), tiling, offsetA, offsetB, offsetC, tailM, tailN, isTransA, isTransB);</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    auto gmA = aGlobal[offsetA];</span></span>
+<span class="line"><span>    auto gmB = bGlobal[offsetB];</span></span>
+<span class="line"><span>    auto gmC = cGlobal[offsetC];</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    AscendC::Matmul&lt;AscendC::MatmulType&lt;AscendC::TPosition::GM, CubeFormat::ND, A_T&gt;,</span></span>
+<span class="line"><span>           AscendC::MatmulType&lt;AscendC::TPosition::GM, CubeFormat::ND, B_T&gt;,</span></span>
+<span class="line"><span>           AscendC::MatmulType&lt;AscendC::TPosition::GM, CubeFormat::ND, C_T&gt;&gt; mm;</span></span>
+<span class="line"><span>    REGIST_MATMUL_OBJ(&amp;pipe, GetSysWorkSpacePtr(), mm, &amp;tiling);</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    mm.SetTensorA(gmA, isTransA);</span></span>
+<span class="line"><span>    mm.SetTensorB(gmB, isTransB);</span></span>
+<span class="line"><span>    mm.SetTail(tailM, tailN);</span></span>
+<span class="line"><span>    mm.IterateAll(gmC);</span></span>
+<span class="line"><span>    mm.End();</span></span>
+<span class="line"><span>}</span></span></code></pre></div><p>执行算子，精度校验失败：</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>data index: 000609, expected: 12979.000000000, actual: 0.000000000, rdiff: 1.000000</span></span>
+<span class="line"><span>data index: 000610, expected: 12931.000000000, actual: 0.000000000, rdiff: 1.000000</span></span>
+<span class="line"><span>data index: 000611, expected: 13120.000000000, actual: 0.000000000, rdiff: 1.000000</span></span>
+<span class="line"><span>data index: 000612, expected: 12275.000000000, actual: 0.000000000, rdiff: 1.000000</span></span>
+<span class="line"><span>error ratio: 0.8750, tolerance: 0.0001</span></span>
+<span class="line"><span>[ERROR] result error</span></span></code></pre></div><p>修改测试脚本和算子Tiling的代码，通过验证单核上的算子执行结果，快速定界。具体如下：</p><p>修改算子调测代码，只启动单核，CPU调测代码中将ICPU_RUN_KF宏接口中的numBlocks设置为1（表示一组AIC和AIV）；算子的Tiling实现中，设置单核场景，AIC核数为1，AIV核数为2，SetDim设置为AIV核数的取值2。如下代码所示。</p><p>以下为调测脚本的代码片段。</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>uint32_t numBlocks = 1;</span></span>
+<span class="line"><span>ICPU_RUN_KF(matmul_custom, numBlocks, a, b, c, workspace, tiling);</span></span></code></pre></div><p>以下为算子Tiling计算的代码片段。</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>int usedCoreNum = 2;</span></span>
+<span class="line"><span>tilingApi.SetDim(usedCoreNum);</span></span></code></pre></div><p>修改为单核场景后，执行算子：</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>-- Installing: $HOME/samples/Precision_Check_Guide/samples-master/operator/MatmulCustomSample/KernelLaunch/MatmulInvocationNeo-muticore/out/bin/ascendc_kernels_bbit</span></span>
+<span class="line"><span>efaf4dc1e484bc3778cac65f56244e59  output/golden.bin</span></span>
+<span class="line"><span>efaf4dc1e484bc3778cac65f56244e59  output/output.bin</span></span>
+<span class="line"><span>error ratio: 0.0000, tolerance: 0.0001</span></span>
+<span class="line"><span>test pass</span></span></code></pre></div><p>从上述比对结果可看出，单核验证结果正确，此时可以定界导致精度的问题与多核逻辑相关。</p><p>首先排查多核切分后的输入和输出地址偏移。分析CalcGMOffset函数，定位到矩阵C的偏移地址offsetC计算错误，正确的偏移应该是mCoreIndx * tiling.N * tiling.singleCoreM + nCoreIndx * tiling.singleCoreN。将offsetC修改为正确的偏移地址后，执行算子，结果比对正确。</p><p>提示，在上述单核场景的修改验证中，AIC核数为1，AIV核数为2；若想进一步验证，不引入任何多核切分，AIC核数和AIV核数均修改为1，代码修改示例如下：</p><ul><li><p>在核函数中REGIST_MATMUL_OBJ接口后，利用判断代码，BlockIdx不为0的AIV核退出。</p><p>以下为算子核函数的代码片段。</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>extern &quot;C&quot; __global__ __aicore__ void matmul_custom(GM_ADDR a, GM_ADDR b, GM_ADDR c, GM_ADDR workspace,</span></span>
+<span class="line"><span>                                                    GM_ADDR tilingGm)</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>    using A_T = half;</span></span>
+<span class="line"><span>    using B_T = half;</span></span>
+<span class="line"><span>    using C_T = float;</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    AscendC::TPipe pipe;</span></span>
+<span class="line"><span>    TCubeTiling tiling;</span></span>
+<span class="line"><span>    CopyTiling(&amp;tiling, tilingGm);</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    AscendC::GlobalTensor&lt;A_T&gt; aGlobal;</span></span>
+<span class="line"><span>    AscendC::GlobalTensor&lt;B_T&gt; bGlobal;</span></span>
+<span class="line"><span>    AscendC::GlobalTensor&lt;C_T&gt; cGlobal;</span></span>
+<span class="line"><span>    aGlobal.SetGlobalBuffer(reinterpret_cast&lt;__gm__ A_T *&gt;(a), tiling.M * tiling.Ka);</span></span>
+<span class="line"><span>    bGlobal.SetGlobalBuffer(reinterpret_cast&lt;__gm__ B_T *&gt;(b), tiling.Ka * tiling.N);</span></span>
+<span class="line"><span>    cGlobal.SetGlobalBuffer(reinterpret_cast&lt;__gm__ C_T *&gt;(c), tiling.M * tiling.N);</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    int offsetA = 0;</span></span>
+<span class="line"><span>    int offsetB = 0;</span></span>
+<span class="line"><span>    int offsetC = 0;</span></span>
+<span class="line"><span>    bool isTransA = false;</span></span>
+<span class="line"><span>    bool isTransB = false;</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    int tailM = 0;</span></span>
+<span class="line"><span>    int tailN = 0;</span></span>
+<span class="line"><span>    CalcGMOffset(GetBlockIdx(), tiling, offsetA, offsetB, offsetC, tailM, tailN, isTransA, isTransB);</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    auto gmA = aGlobal[offsetA];</span></span>
+<span class="line"><span>    auto gmB = bGlobal[offsetB];</span></span>
+<span class="line"><span>    auto gmC = cGlobal[offsetC];</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    AscendC::Matmul&lt;AscendC::MatmulType&lt;AscendC::TPosition::GM, CubeFormat::ND, A_T&gt;,</span></span>
+<span class="line"><span>           AscendC::MatmulType&lt;AscendC::TPosition::GM, CubeFormat::ND, B_T&gt;,</span></span>
+<span class="line"><span>           AscendC::MatmulType&lt;AscendC::TPosition::GM, CubeFormat::ND, C_T&gt;&gt; mm;</span></span>
+<span class="line"><span>    REGIST_MATMUL_OBJ(&amp;pipe, GetSysWorkSpacePtr(), mm, &amp;tiling);</span></span>
+<span class="line"><span>    if (GetBlockIdx() == 1) {</span></span>
+<span class="line"><span>        return;</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>     </span></span>
+<span class="line"><span>    mm.SetTensorA(gmA, isTransA);</span></span>
+<span class="line"><span>    mm.SetTensorB(gmB, isTransB);</span></span>
+<span class="line"><span>    mm.SetTail(tailM, tailN);</span></span>
+<span class="line"><span>    mm.IterateAll(gmC);</span></span>
+<span class="line"><span>    mm.End();</span></span>
+<span class="line"><span>}</span></span></code></pre></div></li><li><p>算子调测脚本的ICPU_RUN_KF中numBlocks和算子Tiling中SetDim的usedCoreNum均设置为1。</p><p>以下为算子调测代码片段。</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>uint32_t numBlocks = 1;</span></span>
+<span class="line"><span>ICPU_RUN_KF(matmul_custom, numBlocks, a, b, c, workspace, tiling);</span></span></code></pre></div><p>以下为算子Tiling计算的代码片段。</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>int usedCoreNum = 1;</span></span>
+<span class="line"><span>tilingApi.SetDim(usedCoreNum);</span></span></code></pre></div></li></ul></li><li><p>案例2：尾块设置不正确</p><p>多核场景下，当最后一个核的singleCoreM/singleCoreN/singleCoreK值与前面的核取值不同时，需要在最后一个核上，即尾核，调用SetTail接口，调整singleCoreM/singleCoreN/singleCoreK为实际尾核上的对应取值；若尾核未设置这些参数值，或者设置的参数值大小不正确，也会导致多核精度错误，单核精度正确。</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>data index: 100254, expected: 13605.000000000, actual: 13137.000000000, rdiff: 0.034399</span></span>
+<span class="line"><span>data index: 101277, expected: 13268.000000000, actual: 13419.000000000, rdiff: 0.011381</span></span>
+<span class="line"><span>data index: 102300, expected: 13509.000000000, actual: 13114.000000000, rdiff: 0.029240</span></span>
+<span class="line"><span>data index: 103323, expected: 13526.000000000, actual: 13400.000000000, rdiff: 0.009315</span></span>
+<span class="line"><span>error ratio: 0.0010, tolerance: 0.0001</span></span>
+<span class="line"><span>[ERROR] result error</span></span></code></pre></div><p>以下为算子核函数的代码片段。</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>__aicore__ inline void CalcGMOffset(int blockIdx, const TCubeTiling &amp;tiling, int &amp;offsetA, int &amp;offsetB, int &amp;offsetC,</span></span>
+<span class="line"><span>                                    int &amp;tailM, int &amp;tailN, bool isTransA, bool isTransB)</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>    uint32_t mSingleBlocks = CeilDiv(tiling.M, tiling.singleCoreM);</span></span>
+<span class="line"><span>    uint32_t mCoreIndx = blockIdx % mSingleBlocks;</span></span>
+<span class="line"><span>    uint32_t nCoreIndx = blockIdx / mSingleBlocks;</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    offsetA = mCoreIndx * tiling.Ka * tiling.singleCoreM;</span></span>
+<span class="line"><span>    if (isTransA) {</span></span>
+<span class="line"><span>        offsetA = mCoreIndx * tiling.singleCoreM;</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>    offsetB = nCoreIndx * tiling.singleCoreN;</span></span>
+<span class="line"><span>    if (isTransB) {</span></span>
+<span class="line"><span>        offsetB = nCoreIndx * tiling.Kb * tiling.singleCoreN;</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>    offsetC = mCoreIndx * tiling.N * tiling.singleCoreM + nCoreIndx * tiling.singleCoreN;</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    // 尾核对应的M/N计算，此处为正确的计算方式</span></span>
+<span class="line"><span>    tailM = tiling.M - mCoreIndx * tiling.singleCoreM;</span></span>
+<span class="line"><span>    tailM = tailM &lt; tiling.singleCoreM ? tailM : tiling.singleCoreM;</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    tailN = tiling.N - nCoreIndx * tiling.singleCoreN;</span></span>
+<span class="line"><span>    tailN = tailN &lt; tiling.singleCoreN ? tailN : tiling.singleCoreN;</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>extern &quot;C&quot; __global__ __aicore__ void matmul_custom(GM_ADDR a, GM_ADDR b, GM_ADDR c, GM_ADDR workspace,</span></span>
+<span class="line"><span>                                                    GM_ADDR tilingGm)</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>    using A_T = half;</span></span>
+<span class="line"><span>    using B_T = half;</span></span>
+<span class="line"><span>    using C_T = float;</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    AscendC::TPipe pipe;</span></span>
+<span class="line"><span>    TCubeTiling tiling;</span></span>
+<span class="line"><span>    CopyTiling(&amp;tiling, tilingGm);</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    AscendC::GlobalTensor&lt;A_T&gt; aGlobal;</span></span>
+<span class="line"><span>    AscendC::GlobalTensor&lt;B_T&gt; bGlobal;</span></span>
+<span class="line"><span>    AscendC::GlobalTensor&lt;C_T&gt; cGlobal;</span></span>
+<span class="line"><span>    aGlobal.SetGlobalBuffer(reinterpret_cast&lt;__gm__ A_T *&gt;(a), tiling.M * tiling.Ka);</span></span>
+<span class="line"><span>    bGlobal.SetGlobalBuffer(reinterpret_cast&lt;__gm__ B_T *&gt;(b), tiling.Ka * tiling.N);</span></span>
+<span class="line"><span>    cGlobal.SetGlobalBuffer(reinterpret_cast&lt;__gm__ C_T *&gt;(c), tiling.M * tiling.N);</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    int offsetA = 0;</span></span>
+<span class="line"><span>    int offsetB = 0;</span></span>
+<span class="line"><span>    int offsetC = 0;</span></span>
+<span class="line"><span>    bool isTransA = false;</span></span>
+<span class="line"><span>    bool isTransB = false;</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    int tailM = 0;</span></span>
+<span class="line"><span>    int tailN = 0;</span></span>
+<span class="line"><span>    CalcGMOffset(GetBlockIdx(), tiling, offsetA, offsetB, offsetC, tailM, tailN, isTransA, isTransB);</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    auto gmA = aGlobal[offsetA];</span></span>
+<span class="line"><span>    auto gmB = bGlobal[offsetB];</span></span>
+<span class="line"><span>    auto gmC = cGlobal[offsetC];</span></span>
+<span class="line"><span> </span></span>
+<span class="line"><span>    AscendC::Matmul&lt;AscendC::MatmulType&lt;AscendC::TPosition::GM, CubeFormat::ND, A_T&gt;,</span></span>
+<span class="line"><span>           AscendC::MatmulType&lt;AscendC::TPosition::GM, CubeFormat::ND, B_T&gt;,</span></span>
+<span class="line"><span>           AscendC::MatmulType&lt;AscendC::TPosition::GM, CubeFormat::ND, C_T&gt;&gt; mm;</span></span>
+<span class="line"><span>    REGIST_MATMUL_OBJ(&amp;pipe, GetSysWorkSpacePtr(), mm, &amp;tiling);</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    mm.SetTensorA(gmA, isTransA);</span></span>
+<span class="line"><span>    mm.SetTensorB(gmB, isTransB);</span></span>
+<span class="line"><span>    // mm.SetTail(tailM, tailN); 尾核设置接口，若此处未更新尾块会导致单核精度正确，多核失败</span></span>
+<span class="line"><span>    mm.IterateAll(gmC);</span></span>
+<span class="line"><span>    mm.End();</span></span>
+<span class="line"><span>}</span></span></code></pre></div></li></ul></li><li><p><strong>排查Matmul API的使用是否正确</strong></p><p>经过上述步骤，可定界出是否为Matmul API使用问题。如果由于Matmul API使用错误导致了算子的精度问题，需要根据Matmul各接口的使用说明、约束条件等，检查接口的使用是否正确。</p><ul><li><p>案例1：未遵循接口约束条件</p><p>在Matmul MDL模板下，调用<a href="https://gitcode.com/cann/asc-devkit/blob/master/docs/api/context/IterateBatch.md" target="_blank" rel="noreferrer">IterateBatch</a>接口，导致算子执行失败。这是由于不满足该接口的约束条件，IterateBatch接口仅支持Norm模板。</p><p>此类问题，应仔细阅读Matmul各接口中的约束条件，并排查算子实现使用的相关接口，是否满足对应接口的约束条件。</p></li><li><p>案例2：未遵循模板约束条件</p><p>在使能<a href="https://gitcode.com/cann/asc-devkit/blob/master/docs/api/context/MatmulConfig.md" target="_blank" rel="noreferrer">doMTE2Preload</a>预加载模板时，若K方向非全载，不满足模板约束条件，则会导致精度比对失败。</p><p>除了满足函数接口约束条件外，也需要满足模板参数相应的约束条件，排查模板参数的使用。</p></li></ul></li><li><p><strong>用于算子调测的golden脚本是否正确</strong></p><p>算子的golden生成脚本，根据自定义算子的功能逻辑自行实现，用于比对算子执行结果是否正确。因此，该golden脚本的逻辑需要与算子的实现逻辑保持一致，如果golden脚本实现错误，会导致算子计算结果的精度比对失败，这种情况是golden数据不可信。</p><p>所以，在算子精度定界定位的过程中，用户需要自行根据自定义算子的逻辑，检查golden脚本的正确性，尤其是对于复杂计算逻辑的算子，需重点排查该项。</p></li></ol>`,6)])])}const d=s(e,[["render",i]]);export{m as __pageData,d as default};

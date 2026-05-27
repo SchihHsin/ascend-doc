@@ -1,0 +1,20 @@
+import{c as s,Q as n,j as t,m as e}from"./chunks/framework.DOi4mjdC.js";const h=JSON.parse('{"title":"Output","description":"","frontmatter":{},"headers":[{"level":1,"title":"Output","slug":"output"},{"level":2,"title":"功能说明","slug":"功能说明"},{"level":2,"title":"函数原型","slug":"函数原型"},{"level":2,"title":"参数说明","slug":"参数说明"},{"level":2,"title":"返回值说明","slug":"返回值说明"},{"level":2,"title":"约束说明","slug":"约束说明"},{"level":2,"title":"调用示例","slug":"调用示例"}],"relativePath":"api/Utils-API/原型注册与管理/OpAICoreConfig/Output-283.md","filePath":"api/Utils-API/原型注册与管理/OpAICoreConfig/Output-283.md"}'),p={name:"api/Utils-API/原型注册与管理/OpAICoreConfig/Output-283.md"};function l(i,a,o,r,u,c){return n(),t("div",null,[...a[0]||(a[0]=[e(`<h1 id="output" tabindex="-1">Output <a class="header-anchor" href="#output" aria-label="Permalink to &quot;Output&quot;">​</a></h1><h2 id="功能说明" tabindex="-1">功能说明 <a class="header-anchor" href="#功能说明" aria-label="Permalink to &quot;功能说明&quot;">​</a></h2><p>某些场景下，同一个算子在不同的AI处理器型号上，其支持的原型输出不同。</p><p>通过该接口，可针对不同的AI处理器型号注册差异化的算子输出。调用该接口后会返回一个OpParamDef结构，后续可通过该结构配置算子输出信息。</p><h2 id="函数原型" tabindex="-1">函数原型 <a class="header-anchor" href="#函数原型" aria-label="Permalink to &quot;函数原型&quot;">​</a></h2><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>OpParamDef &amp;Output(const char *name)</span></span></code></pre></div><h2 id="参数说明" tabindex="-1">参数说明 <a class="header-anchor" href="#参数说明" aria-label="Permalink to &quot;参数说明&quot;">​</a></h2><table tabindex="0"><thead><tr><th>参数</th><th>输入/输出</th><th>说明</th></tr></thead><tbody><tr><td>name</td><td>输入</td><td>算子输出名称。</td></tr></tbody></table><h2 id="返回值说明" tabindex="-1">返回值说明 <a class="header-anchor" href="#返回值说明" aria-label="Permalink to &quot;返回值说明&quot;">​</a></h2><p>算子参数定义，OpParamDef请参考<a href="./../OpParamDef/OpParamDef.html">OpParamDef</a>。</p><h2 id="约束说明" tabindex="-1">约束说明 <a class="header-anchor" href="#约束说明" aria-label="Permalink to &quot;约束说明&quot;">​</a></h2><p>无</p><h2 id="调用示例" tabindex="-1">调用示例 <a class="header-anchor" href="#调用示例" aria-label="Permalink to &quot;调用示例&quot;">​</a></h2><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>class AddCustom : public OpDef {</span></span>
+<span class="line"><span>public:</span></span>
+<span class="line"><span>    AddCustom(const char* name) : OpDef(name)</span></span>
+<span class="line"><span>    {</span></span>
+<span class="line"><span>        this-&gt;Input(&quot;x&quot;).DataType({ ge::DT_FLOAT16 }).ParamType(OPTIONAL);</span></span>
+<span class="line"><span>        this-&gt;Output(&quot;y&quot;).DataType({ ge::DT_FLOAT16 });</span></span>
+<span class="line"><span>        OpAICoreConfig aicConfig1;</span></span>
+<span class="line"><span>        OpAICoreConfig aicConfig2;</span></span>
+<span class="line"><span>        aicConfig1.Output(&quot;y&quot;)</span></span>
+<span class="line"><span>            .ParamType(OPTIONAL)</span></span>
+<span class="line"><span>            .DataType({ ge::DT_FLOAT })</span></span>
+<span class="line"><span>            .Format({ ge::FORMAT_ND });</span></span>
+<span class="line"><span>        aicConfig2.Output(&quot;y&quot;)</span></span>
+<span class="line"><span>            .ParamType(REQUIRED)</span></span>
+<span class="line"><span>            .DataType({ ge::DT_INT32 })</span></span>
+<span class="line"><span>            .Format({ ge::FORMAT_ND });</span></span>
+<span class="line"><span>        this-&gt;AICore().AddConfig(&quot;ascendxxx1&quot;, aicConfig1);</span></span>
+<span class="line"><span>        this-&gt;AICore().AddConfig(&quot;ascendxxx2&quot;, aicConfig2);</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>};</span></span></code></pre></div>`,14)])])}const g=s(p,[["render",l]]);export{h as __pageData,g as default};

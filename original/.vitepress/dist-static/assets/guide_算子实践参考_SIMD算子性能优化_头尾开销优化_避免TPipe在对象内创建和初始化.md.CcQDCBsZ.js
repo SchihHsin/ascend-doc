@@ -1,0 +1,49 @@
+import{c as n,Q as s,j as p,m as e}from"./chunks/framework.DOi4mjdC.js";const l="/assets/aiv_scalar_time%E4%BC%98%E5%8C%96%E5%89%8D%E5%90%8E%E5%AF%B9%E6%AF%94.uQwu_-nY.png",i="/assets/aiv_scalar_ratio%E4%BC%98%E5%8C%96%E5%89%8D%E5%90%8E%E5%AF%B9%E6%AF%94.B4piXX6l.png",x=JSON.parse('{"title":"避免TPipe在对象内创建和初始化","description":"","frontmatter":{},"headers":[{"level":1,"title":"避免TPipe在对象内创建和初始化","slug":"避免tpipe在对象内创建和初始化"}],"relativePath":"guide/算子实践参考/SIMD算子性能优化/头尾开销优化/避免TPipe在对象内创建和初始化.md","filePath":"guide/算子实践参考/SIMD算子性能优化/头尾开销优化/避免TPipe在对象内创建和初始化.md"}'),t={name:"guide/算子实践参考/SIMD算子性能优化/头尾开销优化/避免TPipe在对象内创建和初始化.md"};function c(r,a,_,o,m,d){return s(),p("div",null,[...a[0]||(a[0]=[e(`<h1 id="避免tpipe在对象内创建和初始化" tabindex="-1">避免TPipe在对象内创建和初始化 <a class="header-anchor" href="#避免tpipe在对象内创建和初始化" aria-label="Permalink to &quot;避免TPipe在对象内创建和初始化&quot;">​</a></h1><p>【优先级】中</p><p>【编译器背景知识】创建类对象时，会分配内存空间，用于存储类中的相关成员变量或函数。当类中变量需要参与计算时，变量值从内存被加载到寄存器，计算完成后，变量从寄存器存储回内存。Scalar常量折叠和常量传播是编译器编译时的优化方式，优化前编译器会判断变量是否只初始化过一次或只赋值过一次，若满足此编译优化的前提条件，变量值将会尽量驻留在寄存器中，从而在后续使用变量时，将减少读取内存的操作，提升运行性能。</p><p>【描述】TPipe是用来管理全局内存和同步的框架，用户可以调用TPipe的接口，为TQue/TBuf进行内存分配。在编写Ascend C算子过程中，经常用一个类存放计算所需的相关变量，这里称类名为KernelExample。当TPipe对象在KernelExample类的实现中定义并初始化时，TPipe对象的内存空间在整个KernelExample对象的内存空间之中；需要注意的是，创建TPipe对象时，对象初始化会设置全局变量的TPipe指针，这导致KernelExample对象的内存有被外部污染的风险，此时编译器的编译优化将采取保守策略，不会对KernelExample对象中的Scalar变量进行常量折叠和常量传播。因此，在任何场景下，我们都建议将TPipe对象创建于KernelExample类外部，使得TPipe对象的内存空间独立于KernelExample类对象的内存空间，触发编译器对KernelExample类内Scalar的编译优化，减少算子Scalar指令耗时。</p><p>【反例】</p><p>代码中TPipe对象由KernelExample类内部创建并初始化，影响编译器Scalar折叠优化，在NPU侧导致Scalar不必要的增加。</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>template &lt;typename ComputeT&gt; class KernelExample {</span></span>
+<span class="line"><span> public:</span></span>
+<span class="line"><span>     __aicore__ inline KernelExample() {}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>     __aicore__ inline void Init(...)</span></span>
+<span class="line"><span>     {</span></span>
+<span class="line"><span>         ...</span></span>
+<span class="line"><span>         pipe.InitBuffer(xxxBuf, BUFFER_NUM, xxxSize);</span></span>
+<span class="line"><span>         ...</span></span>
+<span class="line"><span>     }</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span> private:</span></span>
+<span class="line"><span>     ...</span></span>
+<span class="line"><span>     TPipe pipe;</span></span>
+<span class="line"><span>     ...</span></span>
+<span class="line"><span> };</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span> extern &quot;C&quot; __global__ __aicore__ void example_kernel(...)</span></span>
+<span class="line"><span> {</span></span>
+<span class="line"><span>     ...</span></span>
+<span class="line"><span>     KernelExample&lt;float&gt; op;</span></span>
+<span class="line"><span>     op.Init(...);</span></span>
+<span class="line"><span>     ...</span></span>
+<span class="line"><span> }</span></span></code></pre></div><p>【正例】</p><p>改为由Kernel入口函数创建TPipe对象，在KernelExample类中保存TPipe指针使用。</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>template &lt;typename ComputeT&gt; class KernelExample {</span></span>
+<span class="line"><span> public:</span></span>
+<span class="line"><span>     __aicore__ inline KernelExample() {}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>     __aicore__ inline void Init(..., TPipe* pipeIn)</span></span>
+<span class="line"><span>     {</span></span>
+<span class="line"><span>         ...</span></span>
+<span class="line"><span>         pipe = pipeIn;</span></span>
+<span class="line"><span>         pipe-&gt;InitBuffer(xxxBuf, BUFFER_NUM, xxxSize);</span></span>
+<span class="line"><span>         ...</span></span>
+<span class="line"><span>     }</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span> private:</span></span>
+<span class="line"><span>     ...</span></span>
+<span class="line"><span>     TPipe* pipe;</span></span>
+<span class="line"><span>     ...</span></span>
+<span class="line"><span> };</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span> extern &quot;C&quot; __global__ __aicore__ void example_kernel(...)</span></span>
+<span class="line"><span> {</span></span>
+<span class="line"><span>     ...</span></span>
+<span class="line"><span>     TPipe pipe;</span></span>
+<span class="line"><span>     KernelExample&lt;float&gt; op;</span></span>
+<span class="line"><span>     op.Init(..., &amp;pipe);</span></span>
+<span class="line"><span>     ...</span></span>
+<span class="line"><span> }</span></span></code></pre></div><p>【性能对比】</p><p><strong>图 1</strong> aiv_scalar_time优化前后对比<br><img src="`+l+'" alt="" title="aiv_scalar_time优化前后对比"></p><p><strong>图 2</strong> aiv_scalar_ratio优化前后对比<br><img src="'+i+'" alt="" title="aiv_scalar_ratio优化前后对比"></p><p>通过性能数据对比可以看出，Scalar优化效果显著，平均时间从281us减少到236us，下降17%；平均scalar_time时延占比从21%下降到17%。因此在Scalar bound（达到上限）的场景下可以使用此优化措施。</p>',14)])])}const E=n(t,[["render",c]]);export{x as __pageData,E as default};

@@ -1,0 +1,66 @@
+import{c as s,Q as n,j as p,m as e}from"./chunks/framework.DOi4mjdC.js";const g=JSON.parse('{"title":"DataTypeList","description":"","frontmatter":{},"headers":[{"level":1,"title":"DataTypeList","slug":"datatypelist"},{"level":2,"title":"功能说明","slug":"功能说明"},{"level":2,"title":"函数原型","slug":"函数原型"},{"level":2,"title":"参数说明","slug":"参数说明"},{"level":2,"title":"返回值说明","slug":"返回值说明"},{"level":2,"title":"约束说明","slug":"约束说明"},{"level":2,"title":"调用示例","slug":"调用示例"}],"relativePath":"api/Utils-API/原型注册与管理/OpParamDef/DataTypeList.md","filePath":"api/Utils-API/原型注册与管理/OpParamDef/DataTypeList.md"}'),t={name:"api/Utils-API/原型注册与管理/OpParamDef/DataTypeList.md"};function l(i,a,c,o,T,D){return n(),p("div",null,[...a[0]||(a[0]=[e(`<h1 id="datatypelist" tabindex="-1">DataTypeList <a class="header-anchor" href="#datatypelist" aria-label="Permalink to &quot;DataTypeList&quot;">​</a></h1><h2 id="功能说明" tabindex="-1">功能说明 <a class="header-anchor" href="#功能说明" aria-label="Permalink to &quot;功能说明&quot;">​</a></h2><p>定义算子参数数据类型。如果某个输入/输出支持的数据类型支持和其他所有输入/输出支持的数据类型、数据格式组合使用，可以使用该接口定义数据类型。</p><p>使用<a href="./DataType.html">DataType</a>配置数据类型时，算子参数的数据类型和格式必须通过显式组合配置，每个组合包含完整的输入/输出数据类型与数据格式的对应关系。如下的示例中表示：当输入x和y数据类型为DT_FLOAT16时，对应的输出z数据类型也为DT_FLOAT16，支持的数据格式要求为FORMAT_ND。</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>class AddCustom : public OpDef {</span></span>
+<span class="line"><span>public:</span></span>
+<span class="line"><span>    AddCustom(const char* name) : OpDef(name)</span></span>
+<span class="line"><span>    {</span></span>
+<span class="line"><span>        this-&gt;Input(&quot;x&quot;)</span></span>
+<span class="line"><span>            .ParamType(REQUIRED)</span></span>
+<span class="line"><span>            .DataType({ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_INT32})</span></span>
+<span class="line"><span>            .Format({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND});</span></span>
+<span class="line"><span>        this-&gt;Input(&quot;y&quot;)</span></span>
+<span class="line"><span>            .ParamType(REQUIRED)</span></span>
+<span class="line"><span>            .DataType({ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_INT32})</span></span>
+<span class="line"><span>            .Format({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND});</span></span>
+<span class="line"><span>        this-&gt;Output(&quot;z&quot;)</span></span>
+<span class="line"><span>            .ParamType(REQUIRED)</span></span>
+<span class="line"><span>            .DataType({ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_INT32})</span></span>
+<span class="line"><span>            .Format({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND});</span></span>
+<span class="line"><span>        ...</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>};</span></span></code></pre></div><p>如果某个输入/输出支持的数据类型支持和其他所有输入/输出支持的数据类型、数据格式组合使用，使用DataType接口需要写成如下的格式，表示当输入x为DT_FLOAT16时，支持输入y和输入z的所有数据类型、数据格式组合。</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>class XxxCustom : public OpDef {</span></span>
+<span class="line"><span>public:</span></span>
+<span class="line"><span>    XxxCustom(const char* name) : OpDef(name)</span></span>
+<span class="line"><span>    {</span></span>
+<span class="line"><span>        this-&gt;Input(&quot;x&quot;)</span></span>
+<span class="line"><span>            .ParamType(REQUIRED)</span></span>
+<span class="line"><span>            .DataType({ge::DT_FLOAT16, ge::DT_FLOAT16, ge::DT_FLOAT16})</span></span>
+<span class="line"><span>            .Format({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND});</span></span>
+<span class="line"><span>        this-&gt;Input(&quot;y&quot;)</span></span>
+<span class="line"><span>            .ParamType(REQUIRED)</span></span>
+<span class="line"><span>            .DataType({ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_INT32})</span></span>
+<span class="line"><span>            .Format({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND});</span></span>
+<span class="line"><span>        this-&gt;Output(&quot;z&quot;)</span></span>
+<span class="line"><span>            .ParamType(REQUIRED)</span></span>
+<span class="line"><span>            .DataType({ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_INT32})</span></span>
+<span class="line"><span>            .Format({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND});</span></span>
+<span class="line"><span>        ...</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>};</span></span></code></pre></div><p>此时可以通过DataTypeList指定数据类型，无需重复列出，例如：</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>class XxxCustom : public OpDef {</span></span>
+<span class="line"><span>public:</span></span>
+<span class="line"><span>    XxxCustom(const char* name) : OpDef(name)</span></span>
+<span class="line"><span>    {</span></span>
+<span class="line"><span>        this-&gt;Input(&quot;x&quot;)</span></span>
+<span class="line"><span>            .ParamType(REQUIRED)</span></span>
+<span class="line"><span>            .DataTypeList({ge::DT_FLOAT16})</span></span>
+<span class="line"><span>            .Format({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND});</span></span>
+<span class="line"><span>        this-&gt;Input(&quot;y&quot;)</span></span>
+<span class="line"><span>            .ParamType(REQUIRED)</span></span>
+<span class="line"><span>            .DataType({ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_INT32})</span></span>
+<span class="line"><span>            .Format({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND});</span></span>
+<span class="line"><span>        this-&gt;Output(&quot;z&quot;)</span></span>
+<span class="line"><span>            .ParamType(REQUIRED)</span></span>
+<span class="line"><span>            .DataType({ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_INT32})</span></span>
+<span class="line"><span>            .Format({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND});</span></span>
+<span class="line"><span>        ...</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>};</span></span></code></pre></div><h2 id="函数原型" tabindex="-1">函数原型 <a class="header-anchor" href="#函数原型" aria-label="Permalink to &quot;函数原型&quot;">​</a></h2><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>OpParamDef &amp;DataTypeList(std::vector&lt;ge::DataType&gt; types)</span></span></code></pre></div><h2 id="参数说明" tabindex="-1">参数说明 <a class="header-anchor" href="#参数说明" aria-label="Permalink to &quot;参数说明&quot;">​</a></h2><table tabindex="0"><thead><tr><th>参数</th><th>输入/输出</th><th>说明</th></tr></thead><tbody><tr><td>types</td><td>输入</td><td>算子参数数据类型。</td></tr></tbody></table><h2 id="返回值说明" tabindex="-1">返回值说明 <a class="header-anchor" href="#返回值说明" aria-label="Permalink to &quot;返回值说明&quot;">​</a></h2><p>OpParamDef算子定义，OpParamDef请参考<a href="./OpParamDef.html">OpParamDef</a>。</p><h2 id="约束说明" tabindex="-1">约束说明 <a class="header-anchor" href="#约束说明" aria-label="Permalink to &quot;约束说明&quot;">​</a></h2><ul><li>同一输入/输出不能同时设置DataType和DataTypeList。</li><li>本接口不支持和<a href="./UnknownShapeFormat（废弃）.html">UnknownShapeFormat</a>同时使用。</li></ul><h2 id="调用示例" tabindex="-1">调用示例 <a class="header-anchor" href="#调用示例" aria-label="Permalink to &quot;调用示例&quot;">​</a></h2><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>class AddCustom : public OpDef {</span></span>
+<span class="line"><span>public:</span></span>
+<span class="line"><span>    AddCustom(const char* name) : OpDef(name)</span></span>
+<span class="line"><span>    {</span></span>
+<span class="line"><span>        this-&gt;Input(&quot;x&quot;)</span></span>
+<span class="line"><span>            .ParamType(REQUIRED)</span></span>
+<span class="line"><span>            .DataTypeList({ge::DT_FLOAT})</span></span>
+<span class="line"><span>            .Format({ge::FORMAT_ND, ge::FORMAT_NCHW});</span></span>
+<span class="line"><span>        this-&gt;Input(&quot;x1&quot;)</span></span>
+<span class="line"><span>             ......</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>};</span></span></code></pre></div>`,19)])])}const u=s(t,[["render",l]]);export{g as __pageData,u as default};

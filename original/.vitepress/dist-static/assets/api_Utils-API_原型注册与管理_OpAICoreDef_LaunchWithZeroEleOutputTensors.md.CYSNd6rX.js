@@ -1,0 +1,30 @@
+import{c as s,Q as n,j as e,m as t}from"./chunks/framework.DOi4mjdC.js";const d=JSON.parse('{"title":"LaunchWithZeroEleOutputTensors","description":"","frontmatter":{},"headers":[{"level":1,"title":"LaunchWithZeroEleOutputTensors","slug":"launchwithzeroeleoutputtensors"},{"level":2,"title":"功能说明","slug":"功能说明"},{"level":2,"title":"函数原型","slug":"函数原型"},{"level":2,"title":"参数说明","slug":"参数说明"},{"level":2,"title":"返回值说明","slug":"返回值说明"},{"level":2,"title":"约束说明","slug":"约束说明"},{"level":2,"title":"调用示例","slug":"调用示例"}],"relativePath":"api/Utils-API/原型注册与管理/OpAICoreDef/LaunchWithZeroEleOutputTensors.md","filePath":"api/Utils-API/原型注册与管理/OpAICoreDef/LaunchWithZeroEleOutputTensors.md"}'),p={name:"api/Utils-API/原型注册与管理/OpAICoreDef/LaunchWithZeroEleOutputTensors.md"};function l(i,a,o,r,c,u){return n(),e("div",null,[...a[0]||(a[0]=[t(`<h1 id="launchwithzeroeleoutputtensors" tabindex="-1">LaunchWithZeroEleOutputTensors <a class="header-anchor" href="#launchwithzeroeleoutputtensors" aria-label="Permalink to &quot;LaunchWithZeroEleOutputTensors&quot;">​</a></h1><h2 id="功能说明" tabindex="-1">功能说明 <a class="header-anchor" href="#功能说明" aria-label="Permalink to &quot;功能说明&quot;">​</a></h2><p>在算子输出为全空Tensor时，用户可以配置该算子依旧会进行NPU上板执行。</p><h2 id="函数原型" tabindex="-1">函数原型 <a class="header-anchor" href="#函数原型" aria-label="Permalink to &quot;函数原型&quot;">​</a></h2><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>OpAICoreDef &amp;OpAICoreDef::LaunchWithZeroEleOutputTensors(bool launchFlag)</span></span></code></pre></div><h2 id="参数说明" tabindex="-1">参数说明 <a class="header-anchor" href="#参数说明" aria-label="Permalink to &quot;参数说明&quot;">​</a></h2><table tabindex="0"><thead><tr><th>参数</th><th>输入/输出</th><th>说明</th></tr></thead><tbody><tr><td>launchFlag</td><td>输入</td><td>用户开发的自定义算子，在所有输出都为空Tensor时，如果需要该算子进行NPU上板执行时，需要配置为true，否则不会执行该算子。</td></tr></tbody></table><h2 id="返回值说明" tabindex="-1">返回值说明 <a class="header-anchor" href="#返回值说明" aria-label="Permalink to &quot;返回值说明&quot;">​</a></h2><p>OpAICoreDef算子定义，OpAICoreDef请参考<a href="./OpAICoreDef.html">OpAICoreDef</a>。</p><h2 id="约束说明" tabindex="-1">约束说明 <a class="header-anchor" href="#约束说明" aria-label="Permalink to &quot;约束说明&quot;">​</a></h2><p>无</p><h2 id="调用示例" tabindex="-1">调用示例 <a class="header-anchor" href="#调用示例" aria-label="Permalink to &quot;调用示例&quot;">​</a></h2><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>class AddCustom : public OpDef {</span></span>
+<span class="line"><span>public:</span></span>
+<span class="line"><span>    AddCustom(const char* name) : OpDef(name)</span></span>
+<span class="line"><span>    {</span></span>
+<span class="line"><span>        this-&gt;Input(&quot;x&quot;)</span></span>
+<span class="line"><span>            .ParamType(REQUIRED);</span></span>
+<span class="line"><span>        this-&gt;Input(&quot;y&quot;)</span></span>
+<span class="line"><span>            .ParamType(REQUIRED);</span></span>
+<span class="line"><span>        this-&gt;Output(&quot;z&quot;)</span></span>
+<span class="line"><span>            .ParamType(REQUIRED);</span></span>
+<span class="line"><span>        this-&gt;SetInferShape(ge::InferShape);</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>        this-&gt;AICore()</span></span>
+<span class="line"><span>            .SetTiling(optiling::TilingFunc)</span></span>
+<span class="line"><span>            .SetTilingParse(optiling::TilingPrepare)</span></span>
+<span class="line"><span>            .SetOpSelectFormat(optiling::OpSelectFormat)</span></span>
+<span class="line"><span>            .SetCheckSupport(optiling::CheckSupported)</span></span>
+<span class="line"><span>            .LaunchWithZeroEleOutputTensors(true);</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>        OpAICoreConfig aicConfig;</span></span>
+<span class="line"><span>        aicConfig.DynamicCompileStaticFlag(true)</span></span>
+<span class="line"><span>            .DynamicFormatFlag(true)</span></span>
+<span class="line"><span>            .DynamicRankSupportFlag(true)</span></span>
+<span class="line"><span>            .DynamicShapeSupportFlag(true)</span></span>
+<span class="line"><span>            .NeedCheckSupportFlag(true)</span></span>
+<span class="line"><span>            .PrecisionReduceFlag(true);</span></span>
+<span class="line"><span>        // 注意：soc_version请替换成实际的AI处理器型号</span></span>
+<span class="line"><span>        this-&gt;AICore().AddConfig(&quot;soc_version&quot;, aicConfig);</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>};</span></span></code></pre></div>`,13)])])}const g=s(p,[["render",l]]);export{d as __pageData,g as default};

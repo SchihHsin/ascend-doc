@@ -1,0 +1,29 @@
+import{c as n,Q as s,j as e,m as t}from"./chunks/framework.DOi4mjdC.js";const d=JSON.parse('{"title":"Comment","description":"","frontmatter":{},"headers":[{"level":1,"title":"Comment","slug":"comment"},{"level":2,"title":"功能说明","slug":"功能说明"},{"level":2,"title":"函数原型","slug":"函数原型"},{"level":2,"title":"参数说明","slug":"参数说明"},{"level":2,"title":"返回值说明","slug":"返回值说明"},{"level":2,"title":"约束说明","slug":"约束说明"},{"level":2,"title":"调用示例","slug":"调用示例"}],"relativePath":"api/Utils-API/原型注册与管理/OpParamDef/Comment-271.md","filePath":"api/Utils-API/原型注册与管理/OpParamDef/Comment-271.md"}'),p={name:"api/Utils-API/原型注册与管理/OpParamDef/Comment-271.md"};function l(i,a,o,c,r,m){return s(),e("div",null,[...a[0]||(a[0]=[t(`<h1 id="comment" tabindex="-1">Comment <a class="header-anchor" href="#comment" aria-label="Permalink to &quot;Comment&quot;">​</a></h1><h2 id="功能说明" tabindex="-1">功能说明 <a class="header-anchor" href="#功能说明" aria-label="Permalink to &quot;功能说明&quot;">​</a></h2><p>设置input/output参数的注释。用于在自动生成算子原型头文件时，同步生成算子原型注释。</p><p>基于OpDef算子原型定义，自定义算子工程可以实现如下自动化能力：自动生成图模式场景使用的（算子原型头文件），开发者可以使用生成的算子原型进行构图、图编译、图执行等操作。</p><p>生成的注释有助于辅助理解算子原型，并可以基于这些注释自动生成算子原型的文档说明。通常情况下，内置CANN算子使用较多。开发者可以按需使用。</p><h2 id="函数原型" tabindex="-1">函数原型 <a class="header-anchor" href="#函数原型" aria-label="Permalink to &quot;函数原型&quot;">​</a></h2><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>OpParamDef &amp;Comment(const char *comment)</span></span></code></pre></div><h2 id="参数说明" tabindex="-1">参数说明 <a class="header-anchor" href="#参数说明" aria-label="Permalink to &quot;参数说明&quot;">​</a></h2><table tabindex="0"><thead><tr><th>参数</th><th>输入/输出</th><th>说明</th></tr></thead><tbody><tr><td>comment</td><td>输入</td><td>注释内容。</td></tr></tbody></table><h2 id="返回值说明" tabindex="-1">返回值说明 <a class="header-anchor" href="#返回值说明" aria-label="Permalink to &quot;返回值说明&quot;">​</a></h2><p>算子参数定义，OpParamDef请参考<a href="./OpParamDef.html">OpParamDef</a>。</p><h2 id="约束说明" tabindex="-1">约束说明 <a class="header-anchor" href="#约束说明" aria-label="Permalink to &quot;约束说明&quot;">​</a></h2><p>无</p><h2 id="调用示例" tabindex="-1">调用示例 <a class="header-anchor" href="#调用示例" aria-label="Permalink to &quot;调用示例&quot;">​</a></h2><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>class AddCustom : public OpDef {</span></span>
+<span class="line"><span>public:</span></span>
+<span class="line"><span>    explicit AddCustom(const char* name) : OpDef(name)</span></span>
+<span class="line"><span>    {</span></span>
+<span class="line"><span>        this-&gt;Input(&quot;x&quot;)</span></span>
+<span class="line"><span>            .ParamType(REQUIRED)</span></span>
+<span class="line"><span>            .DataType({ge::DT_FLOAT, ge::DT_INT32})</span></span>
+<span class="line"><span>            .FormatList({ge::FORMAT_ND})</span></span>
+<span class="line"><span>            .Comment(&quot;Input cmt 1&quot;); // 注释内容</span></span>
+<span class="line"><span>        this-&gt;Input(&quot;y&quot;)</span></span>
+<span class="line"><span>            .ParamType(REQUIRED)</span></span>
+<span class="line"><span>            .Comment(&quot;Input cmt 2&quot;) // 注释内容</span></span>
+<span class="line"><span>            .DataType({ge::DT_FLOAT, ge::DT_INT32})</span></span>
+<span class="line"><span>            .FormatList({ge::FORMAT_ND});</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>        this-&gt;Output(&quot;z&quot;)</span></span>
+<span class="line"><span>            .Comment(&quot;Output cmt 1&quot;) // 注释内容</span></span>
+<span class="line"><span>            .ParamType(REQUIRED)</span></span>
+<span class="line"><span>            .DataType({ge::DT_FLOAT, ge::DT_INT32})</span></span>
+<span class="line"><span>            .FormatList({ge::FORMAT_ND});</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>        this-&gt;SetInferShape(ge::InferShape).SetInferDataType(ge::InferDataType);</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>        this-&gt;AICore()</span></span>
+<span class="line"><span>            .SetTiling(optiling::TilingFunc);</span></span>
+<span class="line"><span>        this-&gt;AICore().AddConfig(&quot;ascendxxx&quot;);</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>};</span></span></code></pre></div>`,15)])])}const u=n(p,[["render",l]]);export{d as __pageData,u as default};
