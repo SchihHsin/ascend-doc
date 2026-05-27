@@ -163,7 +163,7 @@
   letter-spacing: 0;
   text-transform: none;
   color: var(--vp-c-text-1) !important;
-  padding: 6px 0 6px 16px !important;
+  padding: 6px 0 !important;
 }
 
 /* Subtle separator line between top-level sections */
