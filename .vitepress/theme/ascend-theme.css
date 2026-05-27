@@ -58,7 +58,7 @@
   --vp-sidebar-bg-color: #eeeeff;
 
   /* Code — neutral, no red */
-  --vp-code-block-bg: #282c34;
+  --vp-code-block-bg: rgba(0, 0, 0, .8);
   --vp-code-color: #4e5969;
   --vp-code-bg: rgba(0, 0, 0, .05);
   --vp-code-font-size: 13px;
@@ -184,37 +184,30 @@
   color: var(--vp-c-text-3) !important;
 }
 
-/* Links */
+/* Links — VitePress .link 元素本身无 padding，缩进靠 .items 容器 padding-left 叠加 */
 .VPSidebarItem .link {
   font-size: 13.5px;
   color: var(--vp-c-text-2) !important;
-  border-radius: 0;
-  padding: 5px 16px !important;
-  transition: background .12s, color .12s;
+  transition: color .12s;
 }
 
-.VPSidebarItem .link:hover {
-  background: rgba(46, 83, 250, .08) !important;
+.VPSidebarItem .link:hover .text {
   color: var(--vp-c-text-1) !important;
 }
 
-.VPSidebarItem .link.active {
+/* 激活态：VitePress 在父级 .VPSidebarItem 上加 .is-active，不在 .link 上加 .active */
+.VPSidebarItem.is-active > .item {
   background: linear-gradient(to right, rgba(46, 83, 250, .22), rgba(100, 60, 255, .16)) !important;
-  color: #1d2129 !important;
-  font-weight: 700 !important;
   border-radius: 6px !important;
-  margin: 0 8px !important;
-  padding-left: 8px !important;
-  padding-right: 8px !important;
+  margin: 0 6px !important;
 }
 
-/* 文字在内部 <p class="text"> 上，必须直接指向 */
-.VPSidebarItem .link.active .text {
+.VPSidebarItem.is-active > .item .text {
   color: #1d2129 !important;
   font-weight: 700 !important;
 }
 
-/* 隐藏侧边栏左侧 indicator 竖线（在 .item 内，非 .link 子元素） */
+/* 隐藏所有 indicator 左侧竖线 */
 .VPSidebarItem .item > .indicator {
   display: none !important;
 }
@@ -352,7 +345,7 @@
 }
 
 .vp-doc div[class*='language-'] {
-  background: #282c34;
+  background: rgba(0, 0, 0, .8);
   margin: 16px 0;
   position: relative;
   overflow: hidden;
