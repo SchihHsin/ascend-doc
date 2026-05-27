@@ -195,28 +195,38 @@
   color: var(--vp-c-text-1) !important;
 }
 
-/* === 激活态 — 完全接管 VitePress 的 .is-active 状态 ===
-   VitePress 用 .is-active 加在 .VPSidebarItem 上（非 .link），
-   并用 .VPSidebarItem.level-N.is-active > .item .link > .text { color:brand-1 }
-   我们用 !important 覆盖所有变体 */
+/* === 激活态 ===
+   VitePress 的 scoped CSS 选择器带 [data-v-xxx] 属性权重很高，
+   用多个等价选择器全覆盖 + !important */
 
-/* 激活行底色 + 圆角（不加 margin 避免影响 indicator 定位） */
-.VPSidebarItem.is-active > .item {
-  background: linear-gradient(to right, rgba(46, 83, 250, .2), rgba(100, 60, 255, .14)) !important;
+/* 激活行底色 + 圆角 */
+.VPSidebarItem.is-active > .item,
+.VPSidebarItem.level-0.is-active > .item,
+.VPSidebarItem.level-1.is-active > .item,
+.VPSidebarItem.level-2.is-active > .item,
+.VPSidebarItem.level-3.is-active > .item,
+.VPSidebarItem.level-4.is-active > .item {
+  background: linear-gradient(to right, rgba(46, 83, 250, .18), rgba(100, 60, 255, .12)) !important;
   border-radius: 6px !important;
 }
 
-/* 激活文字：覆盖 VitePress 所有层级的 brand-1 蓝色 */
-.VPSidebarItem.is-active .text {
+/* 激活文字黑色加粗 — 覆盖 VitePress .level-N.is-active>.item .link>.text{color:brand-1} */
+.VPSidebarItem.is-active .text,
+.VPSidebarItem.level-0.is-active > .item .text,
+.VPSidebarItem.level-1.is-active > .item .text,
+.VPSidebarItem.level-2.is-active > .item .text,
+.VPSidebarItem.level-3.is-active > .item .text,
+.VPSidebarItem.level-4.is-active > .item .text {
   color: #1d2129 !important;
   font-weight: 700 !important;
 }
 
-/* indicator 竖线：VitePress 用 left:-17px 绝对定位，
-   需要 background:transparent 覆盖而非 display:none，
-   避免浏览器将 display:block 的 inline style 覆盖掉 CSS display:none */
-.VPSidebarItem .indicator {
-  background: transparent !important;
+/* indicator 蓝色竖线：透明化 */
+.VPSidebarItem .indicator,
+.VPSidebarItem.is-active .indicator,
+.VPSidebarItem.level-2.is-active .indicator,
+.VPSidebarItem.level-3.is-active .indicator {
+  background-color: transparent !important;
   opacity: 0 !important;
 }
 
