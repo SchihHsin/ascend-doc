@@ -831,6 +831,7 @@ details.custom-block[open] summary {
   margin-right: 0 !important;
 }
 
-.VPNavBarTitle .title {
+/* 只隐藏文字span，保留logo img */
+.VPNavBarTitle .title > span {
   display: none !important;
 }
