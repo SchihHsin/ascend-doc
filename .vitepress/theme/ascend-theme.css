@@ -199,9 +199,13 @@
 }
 
 .VPSidebarItem .link.active {
-  background: rgba(46, 83, 250, .16) !important;
+  background: linear-gradient(to right, rgba(46, 83, 250, .22), rgba(100, 60, 255, .16)) !important;
   color: #1d2129 !important;
   font-weight: 700 !important;
+  border-radius: 6px !important;
+  margin: 0 8px !important;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
 }
 
 /* 文字在内部 <p class="text"> 上，必须直接指向 */
@@ -210,15 +214,11 @@
   font-weight: 700 !important;
 }
 
+/* 去掉左描边 indicator */
 .VPSidebarItem .link.active .indicator {
-  background: #2e53fa !important;
+  display: none !important;
 }
 
-/* Nested indentation — 12px per level */
-.VPSidebarItem.level-1 .link { padding-left: 20px !important; }
-.VPSidebarItem.level-2 .link { padding-left: 32px !important; }
-.VPSidebarItem.level-3 .link { padding-left: 44px !important; }
-.VPSidebarItem.level-4 .link { padding-left: 56px !important; }
 
 /* ── 5. ARTICLE CONTENT ── */
 .vp-doc {
