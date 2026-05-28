@@ -56,6 +56,8 @@
   /* Sidebar */
   --vp-sidebar-width: 256px;
   --vp-sidebar-bg-color: #eeeeff;
+  /* 宽屏时侧边栏内容随居中布局右移的偏移量（与 VitePress ≥1440px 规则一致） */
+  --ascend-sb-offset: max(32px, calc((100vw - (var(--vp-layout-max-width, 1440px) - 64px)) / 2));
 
   /* Code — neutral, no red */
   --vp-code-block-bg: #f6f7f8;
@@ -150,10 +152,10 @@
 
 /* ── 4. SIDEBAR ── */
 .VPSidebar {
-  background-color: #eeeeff !important;
-  background-image: linear-gradient(180deg, rgba(100, 60, 255, .06) 0%, rgba(140, 80, 255, .03) 100%) !important;
-  border-right: 1px solid rgba(100, 60, 255, .12) !important;
-  padding-top: 16px !important;
+  background-color: #ffffff !important;
+  background-image: linear-gradient(90deg, rgba(46, 83, 250, .03), rgba(123, 37, 244, .03)) !important;
+  border-right: 1px solid rgba(0, 0, 0, .1) !important;
+  padding-top: 52px !important;
 }
 
 /* Section headers */
@@ -166,27 +168,33 @@
   padding: 6px 0 !important;
 }
 
-/* Subtle separator line between top-level sections */
+/* 顶层 section 之间不要横线 */
 .VPSidebarItem.level-0 {
-  border-top: 1px solid rgba(46, 83, 250, .08);
-  padding-top: 4px;
+  border-top: none !important;
+  padding-top: 0;
   margin-top: 2px;
 }
-
-.VPSidebarItem.level-0:first-child {
-  border-top: none;
-  padding-top: 0;
-  margin-top: 0;
+/* VitePress 用 .group + .group 的 border-top 分隔组，去掉 */
+.VPSidebar .group + .group {
+  border-top: none !important;
+  padding-top: 0 !important;
 }
 
-/* Caret */
+/* Caret —— 移到文字前面（绝对定位，竖直居中），文字缩进统一 */
 .VPSidebarItem .caret {
+  position: absolute !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  height: auto !important;
+  width: 18px !important;
+  margin: 0 !important;
   color: var(--vp-c-text-3) !important;
 }
 
-/* 所有 item 统一左内边距，避免激活时跳变 */
+/* 所有 item 文字统一缩进，左侧 22px 留给 caret */
 .VPSidebarItem > .item {
-  padding-left: 8px !important;
+  padding-left: 22px !important;
 }
 
 /* Links */
@@ -235,18 +243,21 @@
   opacity: 0 !important;
 }
 
-/* level-1 展开不显示竖线 */
-.VPSidebarItem.level-1 .items {
+/* 2nd 级分组（level-0 的子项）不显示竖线 */
+.VPSidebarItem.level-0 > .items {
   border-left: none !important;
+  padding-left: 14px !important;
+  margin-left: 0 !important;
 }
 
-/* level-2+ 展开才显示竖线 */
-.VPSidebarItem.level-2 .items,
-.VPSidebarItem.level-3 .items,
-.VPSidebarItem.level-4 .items,
-.VPSidebarItem.level-5 .items {
-  border-left: 1px solid rgba(0, 0, 0, .1) !important;
-  margin-left: 8px !important;
+/* 3rd 级及更深分组显示竖线；竖线与 caret 之间留间距（不穿插） */
+.VPSidebarItem.level-1 > .items,
+.VPSidebarItem.level-2 > .items,
+.VPSidebarItem.level-3 > .items,
+.VPSidebarItem.level-4 > .items {
+  border-left: 1px solid rgba(0, 0, 0, .12) !important;
+  padding-left: 12px !important;
+  margin-left: 10px !important;
 }
 
 
@@ -255,7 +266,7 @@
   font-family: var(--vp-font-family-base);
   color: var(--vp-c-text-1);
   line-height: 1.75;
-  font-size: 14.5px;
+  font-size: 14px;
 }
 
 .vp-doc h1 {
@@ -427,17 +438,16 @@
 }
 
 /* ── 8. CUSTOM BLOCKS ── */
+/* 左侧留出 44px 图标槽，标题文字与正文同在 44px 处左对齐，图标绝对定位在槽内 */
 .custom-block {
+  position: relative;
   border-radius: 8px;
   border-left: 4px solid;
-  padding: 16px !important;
+  padding: 16px 16px 16px 44px !important;
   margin: 16px 0;
 }
 
 .custom-block-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   padding: 0 !important;
   margin: 0 0 8px 0;
   font-size: 15px;
@@ -448,6 +458,9 @@
 
 .custom-block-title::before {
   content: 'i';
+  position: absolute;
+  left: 16px;
+  top: 16px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -458,7 +471,6 @@
   font-weight: 700;
   font-style: italic;
   font-family: Georgia, serif;
-  flex-shrink: 0;
 }
 
 .custom-block p:last-child { margin-bottom: 0; }
@@ -658,12 +670,12 @@ details.custom-block[open] summary {
 
 /* TOC card — 实际容器类名是 VPDocAsideOutline，不是 VPDocOutline */
 .VPDocAsideOutline {
-  background: #eeeeff !important;
-  background-image: linear-gradient(180deg, rgba(100, 60, 255, .07) 0%, rgba(140, 80, 255, .03) 100%) !important;
-  border: 1px solid rgba(100, 60, 255, .15) !important;
+  background-color: #ffffff !important;
+  background-image: linear-gradient(90deg, rgba(46, 83, 250, .03), rgba(123, 37, 244, .03)) !important;
+  border: none !important;
   border-radius: 8px !important;
   padding: 14px 16px !important;
-  margin-top: 24px !important;
+  margin-top: -32px !important;
 }
 
 /* 隐藏 TOC 默认浮动指示条 */
@@ -683,12 +695,23 @@ details.custom-block[open] summary {
 }
 
 .VPDocAsideOutline .outline-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0;
   text-transform: none;
   color: var(--vp-c-text-1);
   margin-bottom: 8px;
+}
+
+.VPDocAsideOutline .outline-title::before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231d2129' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='3' width='18' height='18' rx='3'/><path d='M7 8h2'/><path d='M12 8h5'/><path d='M7 12h2'/><path d='M12 12h5'/><path d='M7 16h2'/><path d='M12 16h5'/></svg>") no-repeat center / contain;
 }
 
 /* TOC 圆点 + 竖线 */
@@ -823,11 +846,11 @@ details.custom-block[open] summary {
 #ascend-sidebar-search {
   position: fixed;
   top: calc(var(--vp-nav-height, 64px) + 12px);
-  left: 0;
-  width: var(--vp-sidebar-width, 256px);
+  left: var(--ascend-sb-offset);
+  width: calc(var(--vp-sidebar-width, 256px) - 64px);
   z-index: 40;
   box-sizing: border-box;
-  padding: 0 20px;
+  padding: 0;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -989,8 +1012,8 @@ details.custom-block[open] summary {
 
 /* Force light sidebar even in dark mode toggle */
 .dark .VPSidebar {
-  background-color: #eeeeff !important;
-  background-image: linear-gradient(180deg, rgba(100, 60, 255, .06) 0%, rgba(140, 80, 255, .03) 100%) !important;
+  background-color: #ffffff !important;
+  background-image: linear-gradient(90deg, rgba(46, 83, 250, .03), rgba(123, 37, 244, .03)) !important;
 }
 
 /* ── 21. LOGO ── */
@@ -1003,4 +1026,186 @@ details.custom-block[open] summary {
 /* 只隐藏文字span，保留logo img */
 .VPNavBarTitle .title > span {
   display: none !important;
+}
+
+/* ── 22. SIDEBAR RESIZE + COLLAPSE ── */
+/* 拖拽手柄：贴在侧边栏右边框上，鼠标悬停高亮 */
+#ascend-sb-resizer {
+  position: fixed;
+  top: var(--vp-nav-height, 64px);
+  left: calc(var(--ascend-sb-offset) + var(--vp-sidebar-width, 256px) - 32px);
+  width: 8px;
+  margin-left: -4px;
+  height: calc(100vh - var(--vp-nav-height, 64px));
+  z-index: 45;
+  cursor: col-resize;
+}
+#ascend-sb-resizer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 4px;
+  width: 2px;
+  height: 100%;
+  background: transparent;
+  transition: background .15s;
+}
+#ascend-sb-resizer:hover::after {
+  background: rgba(46, 83, 250, .35);
+}
+
+/* 收起把手：从侧边栏右边框凸出的小按钮 */
+#ascend-sb-tab {
+  position: fixed;
+  top: 50%;
+  left: calc(var(--ascend-sb-offset) + var(--vp-sidebar-width, 256px) - 32px);
+  transform: translate(-50%, -50%);
+  width: 16px;
+  height: 46px;
+  z-index: 46;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, .1);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 18, 85, .08);
+  cursor: pointer;
+  color: #86909c;
+  transition: color .15s, box-shadow .15s, background .15s;
+}
+#ascend-sb-tab:hover {
+  color: #2e53fa;
+  background: #f7f8ff;
+  box-shadow: 0 2px 10px rgba(46, 83, 250, .18);
+}
+#ascend-sb-tab svg {
+  width: 12px;
+  height: 12px;
+  transition: transform .2s;
+}
+#ascend-sb-tab.collapsed svg {
+  transform: rotate(180deg);
+}
+
+/* 收起态：侧边栏滑出左侧，正文占满全宽；导航栏 logo 列不受影响 */
+html.ascend-sb-collapsed .VPSidebar {
+  transform: translateX(-100%);
+}
+html.ascend-sb-collapsed .VPContent.has-sidebar {
+  padding-left: 0 !important;
+}
+html.ascend-sb-collapsed #ascend-sidebar-search {
+  display: none;
+}
+html.ascend-sb-collapsed #ascend-sb-resizer {
+  display: none;
+}
+html.ascend-sb-collapsed #ascend-sb-tab {
+  left: 0;
+}
+
+/* 收起/展开切换动画（拖拽时不加 transition 避免卡顿） */
+html.ascend-sb-animating .VPSidebar {
+  transition: transform .26s ease, width .26s ease;
+}
+html.ascend-sb-animating .VPContent {
+  transition: padding-left .26s ease;
+}
+html.ascend-sb-animating #ascend-sb-tab {
+  transition: left .26s ease;
+}
+
+/* ── 23. BACK TO TOP FAB ── */
+#ascend-back-top {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 20px;
+  background-color: #ffffff;
+  background-image: linear-gradient(90deg, rgba(46, 83, 250, .03), rgba(123, 37, 244, .03));
+  border: 1px solid rgba(0, 0, 0, .08);
+  border-radius: 100px;
+  box-shadow: 0 4px 16px rgba(0, 18, 85, .12);
+  color: #1d2129;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--vp-font-family-base);
+  cursor: pointer;
+  user-select: none;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(8px);
+  transition: opacity .25s ease, transform .25s ease, visibility .25s ease, box-shadow .15s;
+}
+#ascend-back-top.show {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+#ascend-back-top:hover {
+  box-shadow: 0 6px 20px rgba(46, 83, 250, .2);
+}
+#ascend-back-top svg {
+  width: 14px;
+  height: 14px;
+  stroke: #1d2129;
+}
+
+/* ── 24. BREADCRUMB (H1 banner 上方) ── */
+.ascend-breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 0 0 16px 0;
+  padding-left: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #86909c;
+}
+.ascend-breadcrumb .crumb {
+  color: #4e5969;
+  text-decoration: none;
+  border-bottom: none !important;
+  white-space: nowrap;
+  transition: color .15s;
+}
+.ascend-breadcrumb a.crumb:hover {
+  color: #2e53fa;
+}
+.ascend-breadcrumb .crumb.current {
+  color: #1d2129;
+  font-weight: 600;
+  cursor: default;
+}
+.ascend-breadcrumb .crumb-home {
+  display: inline-flex;
+  align-items: center;
+  color: #7b25f4;
+}
+.ascend-breadcrumb .crumb-home svg {
+  width: 16px;
+  height: 16px;
+}
+.ascend-breadcrumb .crumb-sep {
+  display: inline-flex;
+  align-items: center;
+  color: #c0c4cc;
+  flex-shrink: 0;
+}
+.ascend-breadcrumb .crumb-sep svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* 有面包屑时，H1 banner 不再用负上边距顶到容器顶部 */
+.vp-doc.ascend-has-crumb h1 {
+  margin-top: 6px !important;
 }

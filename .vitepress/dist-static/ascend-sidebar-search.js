@@ -67,3 +67,238 @@
   mo.observe(document.documentElement, { childList: true, subtree: true });
   setTimeout(function () { mo.disconnect(); }, 5000);
 })();
+
+/* ── Sidebar resize + collapse ── */
+(function () {
+  var MIN = 200, MAX = 480, DEFAULT = 256;
+  var W_KEY = 'ascend-sidebar-width';
+  var C_KEY = 'ascend-sidebar-collapsed';
+  var root = document.documentElement;
+
+  function readWidth() {
+    var w = parseInt(localStorage.getItem(W_KEY), 10);
+    return (w && w >= MIN && w <= MAX) ? w : DEFAULT;
+  }
+
+  var expandedWidth = readWidth();
+  var collapsed = localStorage.getItem(C_KEY) === '1';
+  var resizer = null, tab = null;
+
+  function applyWidth(px) {
+    root.style.setProperty('--vp-sidebar-width', px + 'px');
+  }
+
+  function animate() {
+    root.classList.add('ascend-sb-animating');
+    setTimeout(function () { root.classList.remove('ascend-sb-animating'); }, 300);
+  }
+
+  function setCollapsed(state, withAnim) {
+    collapsed = state;
+    localStorage.setItem(C_KEY, state ? '1' : '0');
+    if (withAnim) animate();
+    // 不改 --vp-sidebar-width（导航栏 logo 列依赖它），只切类
+    root.classList.toggle('ascend-sb-collapsed', state);
+    if (tab) tab.classList.toggle('collapsed', state);
+  }
+
+  // 初始状态（无动画）：变量始终保持展开宽度，收起仅靠 class
+  applyWidth(expandedWidth);
+  if (collapsed) root.classList.add('ascend-sb-collapsed');
+
+  function sbOffset() {
+    return Math.max(32, (window.innerWidth - (1440 - 64)) / 2);
+  }
+
+  function attachDrag(el) {
+    el.addEventListener('mousedown', function (e) {
+      if (collapsed) return;
+      e.preventDefault();
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      function move(ev) {
+        // 宽屏时侧边栏右移了 sbOffset，换算回 --vp-sidebar-width
+        var w = Math.min(MAX, Math.max(MIN, ev.clientX - sbOffset() + 32));
+        expandedWidth = w;
+        applyWidth(w);
+      }
+      function up() {
+        document.removeEventListener('mousemove', move);
+        document.removeEventListener('mouseup', up);
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        localStorage.setItem(W_KEY, expandedWidth);
+      }
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', up);
+    });
+  }
+
+  function build() {
+    var sidebar = document.querySelector('.VPSidebar');
+    var isHome = !!document.querySelector('.VPHome');
+
+    if (!sidebar || isHome) {
+      if (resizer) { resizer.remove(); resizer = null; }
+      if (tab) { tab.remove(); tab = null; }
+      return;
+    }
+
+    if (!resizer) {
+      resizer = document.createElement('div');
+      resizer.id = 'ascend-sb-resizer';
+      document.body.appendChild(resizer);
+      attachDrag(resizer);
+    }
+    if (!tab) {
+      tab = document.createElement('div');
+      tab.id = 'ascend-sb-tab';
+      tab.title = '收起/展开目录';
+      tab.innerHTML =
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"' +
+        ' stroke="currentColor" stroke-width="2.5" stroke-linecap="round"' +
+        ' stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>';
+      document.body.appendChild(tab);
+      tab.addEventListener('click', function () { setCollapsed(!collapsed, true); });
+      tab.classList.toggle('collapsed', collapsed);
+    }
+  }
+
+  [0, 100, 300, 600, 1000, 1500, 2000].forEach(function (ms) {
+    setTimeout(build, ms);
+  });
+
+  var raf = null;
+  var mo = new MutationObserver(function () {
+    if (raf) return;
+    raf = requestAnimationFrame(function () { raf = null; build(); });
+  });
+  mo.observe(document.body, { childList: true, subtree: true });
+})();
+
+/* ── Back to top FAB ── */
+(function () {
+  var btn = null;
+
+  function build() {
+    if (btn) return;
+    btn = document.createElement('div');
+    btn.id = 'ascend-back-top';
+    btn.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"' +
+      ' stroke="currentColor" stroke-width="2" stroke-linecap="round"' +
+      ' stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/>' +
+      '<polyline points="5 12 12 5 19 12"/></svg><span>返回顶部</span>';
+    btn.addEventListener('click', function () {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    document.body.appendChild(btn);
+  }
+
+  function onScroll() {
+    if (!btn) return;
+    btn.classList.toggle('show', window.scrollY > 300);
+  }
+
+  build();
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+  [0, 300, 800].forEach(function (ms) {
+    setTimeout(function () { build(); onScroll(); }, ms);
+  });
+})();
+
+/* ── Breadcrumb above H1 banner ── */
+(function () {
+  var HOME_SVG =
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"' +
+    ' stroke="currentColor" stroke-width="1.8" stroke-linecap="round"' +
+    ' stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5"/>' +
+    '<path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9"/></svg>';
+  var SEP_SVG =
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"' +
+    ' stroke="currentColor" stroke-width="2" stroke-linecap="round"' +
+    ' stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>';
+
+  function trail() {
+    var items = [{ text: '__home__', href: '/' }, { text: 'CANN社区版', href: '/' }];
+    var navActive = document.querySelector('.VPNavBarMenu .VPNavBarMenuLink.active');
+    if (navActive) {
+      items.push({ text: navActive.textContent.trim(), href: navActive.getAttribute('href') });
+    }
+    var nodes = document.querySelectorAll(
+      '.VPSidebar .VPSidebarItem.has-active, .VPSidebar .VPSidebarItem.is-active');
+    nodes.forEach(function (node) {
+      var item = node.querySelector(':scope > .item');
+      if (!item) return;
+      var textEl = item.querySelector('.text');
+      var link = item.querySelector('a.link');
+      var t = textEl ? textEl.textContent.trim() : '';
+      if (t) items.push({ text: t, href: link ? link.getAttribute('href') : null });
+    });
+    return items;
+  }
+
+  function render(items) {
+    var nav = document.createElement('nav');
+    nav.className = 'ascend-breadcrumb';
+    nav.setAttribute('aria-label', 'breadcrumb');
+    items.forEach(function (it, i) {
+      var isLast = i === items.length - 1;
+      if (i > 0) {
+        var sep = document.createElement('span');
+        sep.className = 'crumb-sep';
+        sep.innerHTML = SEP_SVG;
+        nav.appendChild(sep);
+      }
+      var el;
+      if (it.href && !isLast) {
+        el = document.createElement('a');
+        el.href = it.href;
+      } else {
+        el = document.createElement('span');
+      }
+      el.className = 'crumb' + (isLast ? ' current' : '');
+      if (it.text === '__home__') {
+        el.classList.add('crumb-home');
+        el.innerHTML = HOME_SVG;
+        el.setAttribute('aria-label', '首页');
+      } else {
+        el.textContent = it.text;
+      }
+      nav.appendChild(el);
+    });
+    return nav;
+  }
+
+  function build() {
+    var doc = document.querySelector('.vp-doc');
+    var h1 = doc && doc.querySelector('h1');
+    var isHome = !!document.querySelector('.VPHome');
+    if (!doc || !h1 || isHome) {
+      var stale = document.querySelector('.ascend-breadcrumb');
+      if (stale) stale.remove();
+      if (doc) doc.classList.remove('ascend-has-crumb');
+      return;
+    }
+    var items = trail();
+    var key = items.map(function (i) { return i.text; }).join('>');
+    if (doc.getAttribute('data-crumb') === key &&
+        doc.querySelector('.ascend-breadcrumb')) return;
+    doc.setAttribute('data-crumb', key);
+    var old = doc.querySelector('.ascend-breadcrumb');
+    if (old) old.remove();
+    doc.insertBefore(render(items), h1);
+    doc.classList.add('ascend-has-crumb');
+  }
+
+  [0, 100, 300, 600, 1000, 1500].forEach(function (ms) {
+    setTimeout(build, ms);
+  });
+  var raf = null;
+  var mo = new MutationObserver(function () {
+    if (raf) return;
+    raf = requestAnimationFrame(function () { raf = null; build(); });
+  });
+  mo.observe(document.body, { childList: true, subtree: true });
+})();
