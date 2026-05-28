@@ -1158,14 +1158,15 @@ html.ascend-sb-animating #ascend-sb-tab {
   stroke: #1d2129;
 }
 
-/* ── 24. BREADCRUMB (H1 banner 上方) ── */
+/* ── 24. BREADCRUMB (H1 banner 上方，挂 body 绝对定位) ── */
 .ascend-breadcrumb {
+  position: absolute;
+  z-index: 12;
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow: hidden;
   gap: 7px;
-  margin: 0 0 16px 0;
-  padding-left: 8px;
   font-size: 13px;
   line-height: 1.4;
   color: #86909c;

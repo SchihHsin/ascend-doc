@@ -239,36 +239,47 @@
     return items;
   }
 
-  function render(items) {
-    var nav = document.createElement('nav');
-    nav.className = 'ascend-breadcrumb';
-    nav.setAttribute('aria-label', 'breadcrumb');
+  // 面包屑挂在 body（Vue 不会清空 body 直接子节点），绝对定位浮在 banner 上方
+  var el = null;
+
+  function fill(items) {
+    el.innerHTML = '';
     items.forEach(function (it, i) {
       var isLast = i === items.length - 1;
       if (i > 0) {
         var sep = document.createElement('span');
         sep.className = 'crumb-sep';
         sep.innerHTML = SEP_SVG;
-        nav.appendChild(sep);
+        el.appendChild(sep);
       }
-      var el;
+      var c;
       if (it.href && !isLast) {
-        el = document.createElement('a');
-        el.href = it.href;
+        c = document.createElement('a');
+        c.href = it.href;
       } else {
-        el = document.createElement('span');
+        c = document.createElement('span');
       }
-      el.className = 'crumb' + (isLast ? ' current' : '');
+      c.className = 'crumb' + (isLast ? ' current' : '');
       if (it.text === '__home__') {
-        el.classList.add('crumb-home');
-        el.innerHTML = HOME_SVG;
-        el.setAttribute('aria-label', '首页');
+        c.classList.add('crumb-home');
+        c.innerHTML = HOME_SVG;
+        c.setAttribute('aria-label', '首页');
       } else {
-        el.textContent = it.text;
+        c.textContent = it.text;
       }
-      nav.appendChild(el);
+      el.appendChild(c);
     });
-    return nav;
+  }
+
+  function position(doc, h1) {
+    var col = doc.closest('.content-container') || doc;
+    var cr = col.getBoundingClientRect();
+    var hr = h1.getBoundingClientRect();
+    var sx = window.scrollX || window.pageXOffset || 0;
+    var sy = window.scrollY || window.pageYOffset || 0;
+    el.style.left = (cr.left + sx + 8) + 'px';
+    el.style.maxWidth = (cr.width - 16) + 'px';
+    el.style.top = (hr.top + sy - el.offsetHeight - 8) + 'px';
   }
 
   function build() {
@@ -276,25 +287,31 @@
     var h1 = doc && doc.querySelector('h1');
     var isHome = !!document.querySelector('.VPHome');
     if (!doc || !h1 || isHome) {
-      var stale = document.querySelector('.ascend-breadcrumb');
-      if (stale) stale.remove();
+      if (el) el.style.display = 'none';
       if (doc) doc.classList.remove('ascend-has-crumb');
       return;
     }
+    doc.classList.add('ascend-has-crumb');
     var items = trail();
     var key = items.map(function (i) { return i.text; }).join('>');
-    if (doc.getAttribute('data-crumb') === key &&
-        doc.querySelector('.ascend-breadcrumb')) return;
-    doc.setAttribute('data-crumb', key);
-    var old = doc.querySelector('.ascend-breadcrumb');
-    if (old) old.remove();
-    doc.insertBefore(render(items), h1);
-    doc.classList.add('ascend-has-crumb');
+    if (!el) {
+      el = document.createElement('nav');
+      el.className = 'ascend-breadcrumb';
+      el.setAttribute('aria-label', 'breadcrumb');
+      document.body.appendChild(el);
+    }
+    if (el.getAttribute('data-key') !== key) {
+      el.setAttribute('data-key', key);
+      fill(items);
+    }
+    el.style.display = 'flex';
+    position(doc, h1);
   }
 
-  [0, 100, 300, 600, 1000, 1500].forEach(function (ms) {
+  [0, 100, 300, 600, 1000, 1500, 2200].forEach(function (ms) {
     setTimeout(build, ms);
   });
+  window.addEventListener('resize', build);
   var raf = null;
   var mo = new MutationObserver(function () {
     if (raf) return;
