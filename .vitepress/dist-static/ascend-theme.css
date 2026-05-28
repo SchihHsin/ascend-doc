@@ -430,20 +430,20 @@
 .custom-block {
   border-radius: 8px;
   border-left: 4px solid;
-  padding: 0;
+  padding: 16px !important;
   margin: 16px 0;
-  overflow: hidden;
 }
 
 .custom-block-title {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 16px 20px 6px;
+  padding: 0 !important;
+  margin: 0 0 8px 0;
   font-size: 15px;
   font-weight: 700;
   letter-spacing: 0;
-  color: #1d2129;
+  color: #1d2129 !important;
 }
 
 .custom-block-title::before {
@@ -467,11 +467,11 @@
 .custom-block > ul,
 .custom-block > ol,
 .custom-block > pre {
-  padding: 0 20px 0 48px;
+  padding: 0 !important;
   margin-top: 0;
 }
 
-.custom-block > *:last-child { padding-bottom: 16px; }
+.custom-block > *:last-child { padding-bottom: 0 !important; }
 
 /* note / 说明 → 蓝色图标 */
 .custom-block.note {
