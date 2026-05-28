@@ -60,6 +60,7 @@ http.createServer((req, res) => {
   }
 
   res.setHeader('Content-Type', MIME[ext] || 'application/octet-stream')
+  res.setHeader('Cache-Control', 'no-store')  // 避免浏览器缓存旧的 patched JS/CSS
   fs.createReadStream(file).pipe(res).on('error', () => {
     res.writeHead(404); res.end('Not found')
   })

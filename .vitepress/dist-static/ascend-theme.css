@@ -353,8 +353,13 @@
   font-size: 13.5px;
 }
 
-.vp-doc thead {
-  background: #f4f4f5;
+.vp-doc thead { background: transparent; }
+
+/* 表头行：灰底 + 底部 2px 蓝紫渐变线（整行连续）。
+   行背景在 border-collapse 下能正常渲染，透明 th 透出底部渐变 */
+.vp-doc thead tr {
+  background: linear-gradient(90deg, #2e53fa, #7b25f4) left bottom / 100% 2px no-repeat, #f4f4f5;
+  border-top: none;
 }
 
 .vp-doc th {
@@ -363,7 +368,8 @@
   font-size: 13px;
   padding: 10px 16px;
   text-align: left;
-  border-bottom: 1px solid #dededf;
+  background: transparent;
+  border-bottom: none;
   border-right: 1px solid #ebebed;
   white-space: nowrap;
 }
@@ -675,7 +681,7 @@ details.custom-block[open] summary {
   border: none !important;
   border-radius: 8px !important;
   padding: 14px 16px !important;
-  margin-top: -32px !important;
+  margin-top: -12px !important;
 }
 
 /* 隐藏 TOC 默认浮动指示条 */
@@ -1102,7 +1108,7 @@ html.ascend-sb-collapsed #ascend-sb-resizer {
   display: none;
 }
 html.ascend-sb-collapsed #ascend-sb-tab {
-  left: 0;
+  left: 11px;
 }
 
 /* 收起/展开切换动画（拖拽时不加 transition 避免卡顿） */
@@ -1206,7 +1212,7 @@ html.ascend-sb-animating #ascend-sb-tab {
   height: 12px;
 }
 
-/* 有面包屑时，H1 banner 不再用负上边距顶到容器顶部 */
+/* 有面包屑时：H1 banner 上移靠近导航栏，给面包屑留小间距（上下间距一致） */
 .vp-doc.ascend-has-crumb h1 {
-  margin-top: 6px !important;
+  margin-top: -12px !important;
 }
