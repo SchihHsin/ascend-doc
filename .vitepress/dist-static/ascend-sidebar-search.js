@@ -57,15 +57,37 @@
     }
   }
 
-  function tryAll() { insertLogo(); insertSearch(); }
+  /* 顶部导航链接是「相对站点根」的相对路径（如 guide/...、api/README.html、./），
+     只有在首页能正确解析；在深层页面点击会把路径叠加导致 404。
+     这里把它们改写成绝对路径（相对站点根解析），修复跨页导航。 */
+  function absolutizeNav() {
+    var root = location.origin + '/';
+    var links = document.querySelectorAll('.VPNavBarMenu a, .VPNavScreenMenu a');
+    for (var i = 0; i < links.length; i++) {
+      var a = links[i];
+      var h = a.getAttribute('href');
+      if (!h || h.charAt(0) === '#' || /^[a-z]+:/i.test(h)) continue;
+      var u;
+      try { u = new URL(h, root); } catch (e) { continue; }
+      if (u.origin !== location.origin) continue;
+      var abs = u.pathname + u.search + u.hash;
+      if (h !== abs) a.setAttribute('href', abs);
+    }
+  }
+
+  function tryAll() { insertLogo(); insertSearch(); absolutizeNav(); }
 
   [0, 100, 300, 600, 1000, 1500, 2000].forEach(function (ms) {
     setTimeout(tryAll, ms);
   });
 
-  var mo = new MutationObserver(tryAll);
-  mo.observe(document.documentElement, { childList: true, subtree: true });
-  setTimeout(function () { mo.disconnect(); }, 5000);
+  // 持久监听：SPA 换页后导航会重渲染为相对链接，需再次改写
+  var raf = null;
+  var mo = new MutationObserver(function () {
+    if (raf) return;
+    raf = requestAnimationFrame(function () { raf = null; tryAll(); });
+  });
+  mo.observe(document.body, { childList: true, subtree: true });
 })();
 
 /* ── Sidebar resize + collapse ── */

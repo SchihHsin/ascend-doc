@@ -7,7 +7,7 @@ const PORT = 5301
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css',
-  '.js': 'application/javascript',
+  '.js': 'text/javascript',
   '.json': 'application/json',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
