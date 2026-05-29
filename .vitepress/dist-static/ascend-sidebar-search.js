@@ -294,13 +294,12 @@
   }
 
   function position(doc, h1) {
-    var col = doc.closest('.content-container') || doc;
-    var cr = col.getBoundingClientRect();
+    // 与 H1 底色卡片（banner）左对齐：banner 即 h1 元素（含负边距外扩），用它的 rect
     var hr = h1.getBoundingClientRect();
     var sx = window.scrollX || window.pageXOffset || 0;
     var sy = window.scrollY || window.pageYOffset || 0;
-    el.style.left = (cr.left + sx + 8) + 'px';
-    el.style.maxWidth = (cr.width - 16) + 'px';
+    el.style.left = (hr.left + sx) + 'px';
+    el.style.maxWidth = hr.width + 'px';
     el.style.top = (hr.top + sy - el.offsetHeight - 8) + 'px';
   }
 
