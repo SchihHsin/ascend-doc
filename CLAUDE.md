@@ -57,25 +57,47 @@ serve-orig.mjs                ← port 5302 原版 SPA 服务器
 
 **好处**：HTML 文件保持干净，改 CSS/JS 只需更新对应文件并重启服务器，无需批量 patch。
 
-### ⚠️ 关键 patch：app bundle 的 lean 加载（勿丢失）
+### ⚠️ 三个已修复的关键 bug（重装/重打包后须复检）
 
-预构建的每个页面 HTML 里 `<div id="app"></div>` 是**空的**（无 SSR 正文），整站靠客户端渲染。
-VitePress 在**初始加载/刷新**时默认把页面 bundle 从 `.js` 换成 `.lean.js`（精简版，假定正文已存在
-于 SSR HTML 中）。这里没有 SSR 正文 → 精简版渲染空白，表现为"直接访问/刷新正文消失，只有 SPA
-导航能看到内容"。
+这套预构建 SPA 有三个会导致 404/空白/导航失效的坑，全部已修，验证脚本见 `nav-test.mjs`。
 
-**修复**（已应用，patch 在 `dist-static/assets/app.CUO82o8J.js`）：删除初始加载的
-`(e&&(t=t.replace(/\.js$/,".lean.js")),o=import(t))` → 改为 `(o=import(t))`，强制初始加载也用
-完整 bundle。**重新解压/替换 app bundle 后必须重新打这个 patch**，否则刷新空白复现。
+**(1) 深层页直接访问/刷新空白 — lean bundle 条件加载（patch 在 `app.CUO82o8J.js`）**
+深层页 HTML 的 `<div id="app"></div>` 是空的（无 SSR 正文）；首页 `index.html` 则**有** SSR 正文。
+VitePress 初始加载默认把 bundle 从 `.js` 换 `.lean.js`（精简版，假定正文已在 DOM）。深层页没 SSR
+→ lean 渲染空白；首页有 SSR → lean 才对。所以**不能无条件去 lean**（那样首页会坏）。
+正确 patch：`e&&(t=t.replace(/\.js$/,".lean.js"))` → `e&&document.querySelector("#app>*")&&(t=t.replace(/\.js$/,".lean.js"))`
+（仅当 `#app` 有 SSR 内容时才用 lean）。**重打包后须复检**。
+
+**(2) 首页 404 — 首页页面数据 JSON 转义（patch 在 `index.md.DBTG75xY.js` + `.lean.js`）**
+首页页面数据是 `JSON.parse('…单引号串…')`。emoji→SVG patch 把 SVG 属性引号写成 `\"`，但在**单引号**
+JS 串里 `\"` 会变成裸 `"`，JSON 在 position 327 解析失败 → SPA 渲染 404（深层页无此问题）。
+修复：把 SVG 里的 `\"` 改成 `\\"`（→ 串里 `\"` → JSON 合法转义）。改首页 SVG 后务必确认两个 bundle 的
+`JSON.parse(...)` 在浏览器能解析。
+
+**(3) 导航 Tab 叠加 404 — 相对导航链接（fix 在 `ascend-sidebar-search.js` 第 1 个 IIFE）**
+顶部导航渲染成「相对站点根」的相对链接（`guide/…`、`api/README.html`、`./`），只在首页能解析；
+深层页点击会把路径叠加成 `/guide/.../api/README.html` → 404。`absolutizeNav()` 用持久 observer
+把 `.VPNavBarMenu`/`.VPNavScreenMenu` 链接相对站点根解析为绝对路径。
+
+> **代理缓存坑**：若设了 `http_proxy`（如 Clash 7890），代理可能缓存住旧的（甚至语法错误的）
+> patched JS，导致改完仍复现旧问题。serve.mjs 已给静态资源加 `Cache-Control: no-store`；调试时用
+> `curl --noproxy '*'` 或 Chrome `--no-proxy-server` 绕过，避免被代理缓存误导。
+
+### 导航冒烟测试 `nav-test.mjs`
+
+`node nav-test.mjs`（需先 `node serve.mjs`）：用同源 iframe 驱动 SPA，来回点击 首页→指南→API 两轮，
+断言每步不 404、有正文。改动 bundle / 导航 / lean 逻辑后跑一遍。
 
 ### ascend-sidebar-search.js 工作原理
 
 该文件含 **5 个独立 IIFE**（注意：若任一 IIFE 同步抛错，会中断后续 IIFE 执行）：
 
-1. **Logo + 搜索框**（双模式）
+1. **Logo + 搜索框 + 导航链接绝对化**（双模式 + `absolutizeNav()`）
    - 文档页（有侧边栏）：`appendChild` 到 `<body>`，`position: fixed`，ID = `ascend-sidebar-search`
    - 首页（无侧边栏）：插入 `.VPNavBar .content-body` 末尾，ID = `ascend-nav-search`
    - 点击触发隐藏的 `.VPNavBarSearch button`；Logo 用 MutationObserver 插入 `.VPNavBarTitle .title`
+   - `absolutizeNav()`：把导航相对链接改写成绝对路径（修复跨页叠加 404，见上文 bug 3）；
+     此 IIFE 的 observer 已改为**持久**（不再 5s 后 disconnect），以便 SPA 换页后重新改写
 2. **侧边栏拖拽调宽 + 收起把手**：驱动 `--vp-sidebar-width`（200–480px，localStorage 持久化）。
    收起 = 给 `<html>` 加 `.ascend-sb-collapsed`（侧边栏 `translateX(-100%)`、正文 `padding-left:0`，
    **不改 `--vp-sidebar-width`**，否则导航栏 logo 列会被压扁）。把手 `#ascend-sb-tab`、拖拽条 `#ascend-sb-resizer`。
@@ -92,7 +114,8 @@ VitePress 在**初始加载/刷新**时默认把页面 bundle 从 `.js` 换成 `
 `build()` 由 `trail()` 生成路径：`🏠` + `CANN社区版` + 导航激活项(`.VPNavBarMenuLink.active`) +
 侧边栏激活链(`.VPSidebarItem.has-active`/`.is-active` 的 `.text`)，末项为当前页（加粗，无链接）。
 - 节点挂 `document.body`、`position:absolute`，按 `h1.getBoundingClientRect()` 文档坐标浮在 banner 上方
-- 同时给 `.vp-doc` 加 `.ascend-has-crumb`（H1 banner `margin-top` 从 -32px 改 6px，腾出空间）
+- 同时给 `.vp-doc` 加 `.ascend-has-crumb`（H1 banner `margin-top` 改 -12px，腾出空间且上下间距对称）
+- TOC 卡片 `margin-top:-12px` 与 banner 顶对齐（两者都落在 nav 下约 36px 处）
 - resize + MutationObserver(body) 重算位置
 
 ### 宽屏对齐 `--ascend-sb-offset`
@@ -107,10 +130,13 @@ fixed 元素（搜索框/拖拽条/把手）用 `--ascend-sb-offset`（同公式
 首页内容改动需要同时 patch 三个文件：
 ```bash
 # Python 脚本替换，保持 JSON 转义正确
-# 1. dist-static/index.html                      （SSR 预渲染内容）
+# 1. dist-static/index.html                      （SSR 预渲染内容；这里 SVG 是原始 HTML，引号用 "）
 # 2. dist-static/assets/index.md.DBTG75xY.js    （主 bundle）
-# 3. dist-static/assets/index.md.DBTG75xY.lean.js  （lean bundle，VitePress 优先加载此文件）
+# 3. dist-static/assets/index.md.DBTG75xY.lean.js  （lean bundle，首页有 SSR 故优先加载此文件）
 ```
+> ⚠️ bundle 里页面数据是 `JSON.parse('单引号串')`：串内 JSON 结构引号用裸 `"`，SVG 属性引号必须用
+> `\\"`（→ 串里 `\"` → JSON 合法）。写成 `\"` 会被单引号串解析成裸 `"` 而 JSON 解析失败 → 首页 404。
+> 改完用 node 验证：`eval(JSON.parse 实参)` 再 `JSON.parse` 不报错。
 
 ### CSS 修改流程
 
