@@ -1224,10 +1224,10 @@ html.ascend-sb-animating #ascend-sb-tab {
   gap: 8px;
   padding: 9px 20px;
   background-color: #ffffff;
-  background-image: linear-gradient(90deg, rgba(46, 83, 250, .03), rgba(123, 37, 244, .03));
-  border: 1px solid rgba(0, 0, 0, .08);
+  background-image: linear-gradient(90deg, rgba(46, 83, 250, .15), rgba(123, 37, 244, .15));
+  border: none;
   border-radius: 100px;
-  box-shadow: 0 4px 16px rgba(0, 18, 85, .12);
+  box-shadow: none;
   color: #1d2129;
   font-size: 13px;
   font-weight: 600;
@@ -1238,16 +1238,13 @@ html.ascend-sb-animating #ascend-sb-tab {
   visibility: hidden;
   pointer-events: none;
   transform: translateX(-50%) translateY(8px);
-  transition: opacity .25s ease, transform .25s ease, visibility .25s ease, box-shadow .15s;
+  transition: opacity .25s ease, transform .25s ease, visibility .25s ease;
 }
 #ascend-back-top.show {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
   transform: translateX(-50%) translateY(0);
-}
-#ascend-back-top:hover {
-  box-shadow: 0 6px 20px rgba(46, 83, 250, .2);
 }
 #ascend-back-top svg {
   width: 14px;
