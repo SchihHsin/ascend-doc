@@ -75,7 +75,33 @@
     }
   }
 
-  function tryAll() { insertLogo(); insertSearch(); absolutizeNav(); }
+  /* 正文里以 emoji 开头的引用块 → 按 emoji 归到状态色（info/tip/caution/danger）。
+     只加 class，不改正文文字；emoji 由 CSS ::first-letter 藏掉，图标/默认词由 CSS 生成。 */
+  var BQ_MAP = {
+    '💡': 'info', '📌': 'info', '🧬': 'info', 'ℹ': 'info', '📖': 'info',
+    '✅': 'tip', '🚀': 'tip', '🎯': 'tip', '✨': 'tip',
+    '⚠': 'caution', '📢': 'caution', '❗': 'caution',
+    '❌': 'danger', '🚫': 'danger', '⛔': 'danger'
+  };
+  function classifyBlockquotes() {
+    var bqs = document.querySelectorAll('.vp-doc blockquote');
+    for (var i = 0; i < bqs.length; i++) {
+      var bq = bqs[i];
+      var p = bq.querySelector('p');
+      bq.classList.remove('bq-info', 'bq-tip', 'bq-caution', 'bq-danger', 'bq-noword');
+      if (!p) continue;
+      var t = (p.textContent || '').replace(/^\s+/, '');
+      var first = Array.from(t)[0] || '';        // 首个码位（含 astral emoji）
+      var cls = BQ_MAP[first];
+      if (!cls) continue;
+      bq.classList.add('bq-' + cls);
+      // emoji 后紧跟 <strong> 视为「配了标题词」；否则用默认词
+      var hasWord = p.firstElementChild && p.firstElementChild.tagName === 'STRONG';
+      if (!hasWord) bq.classList.add('bq-noword');
+    }
+  }
+
+  function tryAll() { insertLogo(); insertSearch(); absolutizeNav(); classifyBlockquotes(); }
 
   [0, 100, 300, 600, 1000, 1500, 2000].forEach(function (ms) {
     setTimeout(tryAll, ms);

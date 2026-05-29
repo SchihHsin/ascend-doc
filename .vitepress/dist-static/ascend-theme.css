@@ -345,9 +345,11 @@
 .vp-doc table {
   display: table;
   width: 100%;
-  border-collapse: collapse;
+  /* separate（非 collapse）才能让 border 跟随 border-radius 变圆角 */
+  border-collapse: separate;
+  border-spacing: 0;
   border: 1px solid #dededf;
-  border-radius: 4px;
+  border-radius: 12px;
   overflow: hidden;
   margin: 16px 0;
   font-size: 13.5px;
@@ -358,7 +360,7 @@
 /* 表头行：灰底 + 底部 2px 蓝紫渐变线（整行连续）。
    行背景在 border-collapse 下能正常渲染，透明 th 透出底部渐变 */
 .vp-doc thead tr {
-  background: linear-gradient(90deg, #2e53fa, #7b25f4) left bottom / 100% 2px no-repeat, #f4f4f5;
+  background: linear-gradient(90deg, #2e53fa, #7b25f4) left bottom / 100% 1px no-repeat, #f4f4f5;
   border-top: none;
 }
 
@@ -575,6 +577,95 @@ details.custom-block[open] summary {
   margin: 16px 0;
   color: var(--vp-c-text-2);
 }
+
+/* ── 9b. emoji 引用块 → 状态色提示（JS 按开头 emoji 加 bq-* class） ── */
+.vp-doc blockquote.bq-info,
+.vp-doc blockquote.bq-tip,
+.vp-doc blockquote.bq-caution,
+.vp-doc blockquote.bq-danger {
+  position: relative;
+  border-left: 3px solid;
+  border-radius: 0 8px 8px 0;
+  margin: 16px 0;
+  padding: 12px 16px;
+  color: #1d2129;
+}
+.vp-doc blockquote.bq-info > p,
+.vp-doc blockquote.bq-tip > p,
+.vp-doc blockquote.bq-caution > p,
+.vp-doc blockquote.bq-danger > p { margin: 0; }
+
+/* 藏掉开头 emoji（首字符），不改正文 */
+.vp-doc blockquote.bq-info > p:first-of-type::first-letter,
+.vp-doc blockquote.bq-tip > p:first-of-type::first-letter,
+.vp-doc blockquote.bq-caution > p:first-of-type::first-letter,
+.vp-doc blockquote.bq-danger > p:first-of-type::first-letter {
+  font-size: 0;
+}
+
+/* 配了词：图标放左槽，正文（含加粗词）整体右移 */
+.vp-doc blockquote.bq-info:not(.bq-noword),
+.vp-doc blockquote.bq-tip:not(.bq-noword),
+.vp-doc blockquote.bq-caution:not(.bq-noword),
+.vp-doc blockquote.bq-danger:not(.bq-noword) {
+  padding-left: 44px;
+}
+.vp-doc blockquote.bq-info:not(.bq-noword)::before,
+.vp-doc blockquote.bq-tip:not(.bq-noword)::before,
+.vp-doc blockquote.bq-caution:not(.bq-noword)::before,
+.vp-doc blockquote.bq-danger:not(.bq-noword)::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  top: 12px;
+  width: 20px;
+  height: 20px;
+  /* 用单独属性，避免 background 简写把 background-image 重置为 none */
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+/* 没配词：顶部标题行（图标 + 默认词），正文在下 */
+.vp-doc blockquote.bq-noword::before {
+  display: flex;
+  align-items: center;
+  min-height: 20px;
+  margin-bottom: 4px;
+  padding-left: 26px;
+  font-weight: 700;
+  background-repeat: no-repeat;
+  background-position: left center;
+  background-size: 20px 20px;
+}
+
+/* info — 蓝 */
+.vp-doc blockquote.bq-info { border-left-color: #1890ff; background: #eaf4ff; }
+.vp-doc blockquote.bq-info::before {
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231890ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M9 18h6M10 21h4'/><path d='M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2v.3h6v-.3c0-.8.4-1.5 1-2A7 7 0 0 0 12 2Z'/></svg>");
+}
+.vp-doc blockquote.bq-info.bq-noword::before { content: "说明"; color: #1890ff; }
+
+/* tip — 绿 */
+.vp-doc blockquote.bq-tip { border-left-color: #30a85e; background: #e9f8ef; }
+.vp-doc blockquote.bq-tip::before {
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2330a85e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='m8.3 12 2.6 2.6 4.8-5.4'/></svg>");
+}
+.vp-doc blockquote.bq-tip.bq-noword::before { content: "建议"; color: #30a85e; }
+
+/* caution — 橙 */
+.vp-doc blockquote.bq-caution { border-left-color: #fa8c16; background: #fff7e6; }
+.vp-doc blockquote.bq-caution::before {
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fa8c16' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 4 2.7 20h18.6z'/><path d='M12 10v4'/><path d='M12 17.5h.01'/></svg>");
+}
+.vp-doc blockquote.bq-caution.bq-noword::before { content: "注意"; color: #fa8c16; }
+
+/* danger — 红 */
+.vp-doc blockquote.bq-danger { border-left-color: #e63838; background: #fff1f0; }
+.vp-doc blockquote.bq-danger::before {
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e63838' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='m15 9-6 6M9 9l6 6'/></svg>");
+}
+.vp-doc blockquote.bq-danger.bq-noword::before { content: "警告"; color: #e63838; }
 
 /* ── 10. HR ── */
 .vp-doc hr {
