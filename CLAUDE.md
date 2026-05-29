@@ -137,6 +137,10 @@ fixed 元素（搜索框/拖拽条/把手）用 `--ascend-sb-offset`（同公式
 > ⚠️ bundle 里页面数据是 `JSON.parse('单引号串')`：串内 JSON 结构引号用裸 `"`，SVG 属性引号必须用
 > `\\"`（→ 串里 `\"` → JSON 合法）。写成 `\"` 会被单引号串解析成裸 `"` 而 JSON 解析失败 → 首页 404。
 > 改完用 node 验证：`eval(JSON.parse 实参)` 再 `JSON.parse` 不报错。
+>
+> ⚠️ **首页 feature 图标必须是「字符串」不是 `{svg}`**：本版 VitePress 的 VPFeature 对**对象型** icon
+> 当 `VPImage` 渲染（需 `src/light/dark`），不支持 `{svg}` → 渲染为空、与 SSR 失配把图标清掉。
+> 页面数据里 `"icon"` 要写成裸 svg 字符串 `"icon":"<svg…>"`，走 innerHTML 分支才显示。
 
 ### CSS 修改流程
 
@@ -157,9 +161,11 @@ lsof -ti:5301 | xargs kill; node serve.mjs &
 - Nav bar 标题 / 激活链接 → `#c7000b`（昇腾红，UI 里唯一的红色）
 - `.vp-doc` 正文链接 → `#2e53fa`（品牌蓝）；正文字号 `14px`
 - 实心按钮 → 黑色 `#000000`，胶囊形 `border-radius: 100px`
-- 侧边栏 / TOC 卡片底色 → 白底 + `linear-gradient(90deg, rgba(46,83,250,.03), rgba(123,37,244,.03))`
+- 侧边栏 / TOC 卡片底色 → 白底 + 3% 蓝紫渐变 `linear-gradient(90deg, rgba(46,83,250,.03), rgba(123,37,244,.03))`
+- 返回顶部 FAB → 15% 蓝紫渐变（`rgba(...,.15)`），无描边无阴影
 - 侧边栏激活项 → 蓝紫渐变底色 + 黑色加粗文字
 - 代码块底色 → `#f6f7f8`（浅灰，亮色主题）
+- 表格 → 圆角 `12px`；**必须 `border-collapse: separate; border-spacing:0`**（collapse 下 border-radius 对边框无效，会出现「底色圆角但描边直角」）；表头底部 1px 蓝紫渐变线放在 `thead tr` 背景（thead 背景在表格里不渲染，要用 tr）
 - 深浅色切换按钮 → 已隐藏（`.VPNavBarAppearance { display: none }`）
 
 侧边栏（目录）结构规范：
@@ -186,9 +192,13 @@ lsof -ti:5301 | xargs kill; node serve.mjs &
 | `#ascend-sidebar-search` | 侧边栏顶部搜索框（fixed，`left:var(--ascend-sb-offset)`，JS 控制显隐） |
 | `#ascend-nav-search` | 首页导航栏搜索框（插入 .content-body 末尾） |
 | `#ascend-sb-tab` / `#ascend-sb-resizer` | 侧边栏收起把手 / 拖拽调宽条 |
-| `#ascend-back-top` | 返回顶部 FAB（body 级，底部居中） |
-| `.ascend-breadcrumb` | 面包屑（body 级绝对定位，浮在 H1 banner 上方） |
+| `#ascend-back-top` | 返回顶部 FAB（body 级，底部居中；15% 渐变，无边框/阴影） |
+| `.ascend-breadcrumb` | 面包屑（body 级绝对定位，与 H1 banner 卡片**左对齐**：按 `h1.rect.left` 定位） |
+| `.vp-doc blockquote.bq-info/.bq-tip/.bq-caution/.bq-danger` | emoji 引用块状态色（见下方专节） |
 | `.vp-doc div[class*='language-'] button.copy` | 代码块复制按钮（用 `background-color` 不用 `background`，避免覆盖 `background-image` 图标） |
+
+> ⚠️ CSS 给 `::before` 设图标时，定位规则里别用 `background:` **简写**（会把 `background-image` 重置为 none，
+> 且简写所在选择器若更具体会盖掉单独设的 `background-image`，导致图标不显示）。用 `background-repeat/position/size` 单独属性。
 
 ### 提示块（Custom Block）类型映射
 
@@ -199,6 +209,19 @@ lsof -ti:5301 | xargs kill; node serve.mjs &
 HTML 结构：`<div class="note custom-block github-alert"><p class="custom-block-title">说明</p>...`
 
 标题文字统一为黑色加粗（`#1d2129 font-weight:700`），颜色区分只体现在左边框和图标圆点上。
+
+### emoji 引用块状态色化（与 custom-block 并存的另一套）
+
+正文里以 emoji 开头的 markdown 引用块（`<blockquote><p>💡 …`）会被状态色化。**完全不改正文**：
+
+- **JS**（`ascend-sidebar-search.js` 第 1 个 IIFE 的 `classifyBlockquotes()`，跟 `absolutizeNav` 共用持久 observer）：
+  按开头 emoji 给 blockquote 加 class —— 💡📌🧬→`bq-info`(蓝) / ✅🚀→`bq-tip`(绿) / ⚠️→`bq-caution`(橙) / ❌→`bq-danger`(红)；
+  emoji 后紧跟 `<strong>` 视为「配了标题词」，否则再加 `bq-noword`。无 emoji 的引用块不加 class、保持灰。
+- **CSS**：`> p::first-letter { font-size:0 }` 藏掉开头 emoji（不改文字）；`::before` 出线性状态图标；
+  - 配词：行内 `[图标] **原词**：内容`（原词来自 `<strong>`）；
+  - 无配词：`::before` 出「图标 + 默认词」当顶部标题行（蓝=说明 / 绿=建议 / 橙=注意 / 红=警告），正文在下。
+- 颜色复用 custom-block 那套（蓝 `#1890ff` / 绿 `#30a85e` / 橙 `#fa8c16` / 红 `#e63838`）。
+- 验证脚本无；改完肉眼看 5 个含此类引用块的页面（入门教程/编程指南/跨代迁移 等）。
 
 ## Custom markdown pipeline
 
