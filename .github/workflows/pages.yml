@@ -23,6 +23,37 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Prepare static site for /ascend-doc/
+        run: |
+          python3 - <<'EOF'
+          import os, shutil
+
+          src = ".vitepress/dist-static"
+          dst = "_site"
+          shutil.copytree(src, dst)
+          open(os.path.join(dst, ".nojekyll"), "w").close()
+
+          head_inject = (
+            '<link rel="stylesheet" href="/ascend-doc/ascend-theme.css">'
+            '<script defer src="/ascend-doc/ascend-sidebar-search.js"></script>'
+          )
+
+          for root, _, files in os.walk(dst):
+            for name in files:
+              if not name.endswith(".html"):
+                continue
+              p = os.path.join(root, name)
+              with open(p, "r", encoding="utf-8") as f:
+                html = f.read()
+              html = html.replace('\\"base\\":\\"/\\"', '\\"base\\":\\"/ascend-doc/\\"')
+              html = html.replace('href="/assets/', 'href="/ascend-doc/assets/')
+              html = html.replace('src="/assets/', 'src="/ascend-doc/assets/')
+              html = html.replace('href="/vp-icons.css"', 'href="/ascend-doc/vp-icons.css"')
+              if "/ascend-doc/ascend-theme.css" not in html:
+                html = html.replace("</head>", head_inject + "</head>", 1)
+              with open(p, "w", encoding="utf-8") as f:
+                f.write(html)
+          EOF
       - name: Setup Pages
         uses: actions/configure-pages@v5
         with:
@@ -30,7 +61,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "."
+          path: "_site"
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

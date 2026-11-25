@@ -277,7 +277,7 @@
   /* H1 banner: weakened glass asset over layered mirrored gradients */
   background-color: #F9FAFB;
   background-image:
-    url('/h1-glass-cards.png'),
+    url('./h1-glass-cards.png'),
     radial-gradient(ellipse 220px 150px at 42px -24px, rgba(246, 237, 255, .5) 0%, rgba(246, 237, 255, 0) 100%),
     radial-gradient(ellipse 620px 240px at 100% 0%, #D0DBFF 0%, #ECFBFF 34%, #FBFBFC 68%, #F9FAFB 100%);
   background-repeat: no-repeat, no-repeat, no-repeat;

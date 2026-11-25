@@ -1,4 +1,8 @@
 (function () {
+  var BASE = (location.pathname === '/ascend-doc' || location.pathname.indexOf('/ascend-doc/') === 0)
+    ? '/ascend-doc'
+    : '';
+
   /* ── Logo ── */
   function insertLogo() {
     if (document.querySelector('.VPNavBarTitle img')) return;
@@ -7,7 +11,7 @@
     if (!a) return;
     var img = document.createElement('img');
     img.className = 'logo';
-    img.src = '/Ascendlogo.svg';
+    img.src = BASE + '/Ascendlogo.svg';
     img.alt = 'Ascend C';
     a.insertBefore(img, a.firstChild);
   }
@@ -61,7 +65,10 @@
      只有在首页能正确解析；在深层页面点击会把路径叠加导致 404。
      这里把它们改写成绝对路径（相对站点根解析），修复跨页导航。 */
   function absolutizeNav() {
-    var root = location.origin + '/';
+    var basePrefix = (location.pathname === '/ascend-doc' || location.pathname.indexOf('/ascend-doc/') === 0)
+      ? '/ascend-doc'
+      : '';
+    var root = location.origin + basePrefix + '/';
     var links = document.querySelectorAll('.VPNavBarMenu a, .VPNavScreenMenu a');
     for (var i = 0; i < links.length; i++) {
       var a = links[i];
@@ -370,8 +377,17 @@
 
 /* ── Ascend Bento Home (3D 光晕 Hero + 配置驱动分层 Bento 首页) ── */
 (function () {
+  var BASE = (location.pathname === '/ascend-doc' || location.pathname.indexOf('/ascend-doc/') === 0)
+    ? '/ascend-doc'
+    : '';
   var cachedConfig = null;
   var loadingConfig = false;
+
+  function withBase(href) {
+    if (!href || href.charAt(0) === '#' || /^[a-z]+:/i.test(href)) return href;
+    if (BASE && href.indexOf(BASE + '/') === 0) return href;
+    return BASE + (href.charAt(0) === '/' ? href : '/' + href);
+  }
 
   var ICON_MAP = {
     code: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>',
@@ -450,7 +466,7 @@
       var cols = items.length === 2 ? 'cols-2' : 'cols-3';
       itemsHtml = '<div class="abh-subgrid ' + cols + '">' + items.map(function (it) {
         var tagAcc = ACCENT[it.tagAccent] || acc;
-        return '<a class="abh-subtile" href="' + esc(it.href || '#') + '">' +
+        return '<a class="abh-subtile" href="' + esc(withBase(it.href || '#')) + '">' +
           '<div class="abh-subtile-top">' +
             '<span class="abh-subtile-tag" style="color:' + tagAcc.softFg + '">' + esc(it.tag || '') + '</span>' +
             '<span class="abh-link-arrow">→</span>' +
@@ -461,7 +477,7 @@
     } else {
       itemsHtml = '<div class="abh-subgrid cols-2">' + items.map(function (it, idx) {
         var spanFull = (it.spanFullIfOdd && items.length % 2 === 1 && idx === items.length - 1) ? ' abh-span-full-2' : '';
-        return '<a class="abh-link-row filled' + spanFull + '" href="' + esc(it.href || '#') + '">' +
+        return '<a class="abh-link-row filled' + spanFull + '" href="' + esc(withBase(it.href || '#')) + '">' +
           '<span>' + esc(it.title) + '</span><span class="abh-link-arrow">→</span>' +
         '</a>';
       }).join('') + '</div>';
@@ -494,7 +510,7 @@
     var listCls = isWide ? 'abh-subgrid cols-3' : 'abh-list';
     var listHtml = items.map(function (it, idx) {
       var hiddenCls = (overflow && idx >= limit) ? ' abh-extra abh-hidden' : '';
-      return '<li class="' + hiddenCls + '"><a class="abh-link-row' + (isWide ? ' filled' : '') + '" href="' + esc(it.href || '#') + '">' +
+      return '<li class="' + hiddenCls + '"><a class="abh-link-row' + (isWide ? ' filled' : '') + '" href="' + esc(withBase(it.href || '#')) + '">' +
         '<span>' + esc(it.title) + '</span><span class="abh-link-arrow">→</span></a></li>';
     }).join('');
 
@@ -529,7 +545,7 @@
         (cat.badge ? '<span style="font-size:12px;color:#94A3B8;font-family:JetBrains Mono,monospace">' + esc(cat.badge) + '</span>' : '') +
       '</div>' +
       '<div class="abh-subgrid cols-5">' + items.map(function (it) {
-        return '<a class="abh-link-row filled" href="' + esc(it.href || '#') + '"><span>' + esc(it.title) + '</span><span class="abh-link-arrow">→</span></a>';
+        return '<a class="abh-link-row filled" href="' + esc(withBase(it.href || '#')) + '"><span>' + esc(it.title) + '</span><span class="abh-link-arrow">→</span></a>';
       }).join('') + '</div>' +
     '</section>';
   }
@@ -540,7 +556,7 @@
 
     var hero = config.hero || {};
     var quickTags = (config.quickTags || []).map(function (t) {
-      return '<a class="abh-quick-pill" href="' + esc(t.href || '#') + '">' + esc(t.label) + '</a>';
+      return '<a class="abh-quick-pill" href="' + esc(withBase(t.href || '#')) + '">' + esc(t.label) + '</a>';
     }).join('');
 
     var cats = config.categories || [];
@@ -610,7 +626,7 @@
             '<svg class="abh-cube-br" viewBox="0 0 32 32" fill="none">' +
               '<path d="M16 3L27 9.5L16 16L5 9.5L16 3Z" fill="#FFFFFF"/><path d="M5 9.5L16 16V29L5 22.5V9.5Z" fill="#DCE7FE"/><path d="M27 9.5L16 16V29L27 22.5V9.5Z" fill="#B4C6FC"/><path d="M16 3L27 9.5V22.5L16 29L5 22.5V9.5L16 3Z" stroke="white" stroke-opacity="0.85" stroke-width="0.8"/>' +
             '</svg>' +
-            '<img class="abh-hero-img" src="/cann-docs-hero-layers.png" alt="Ascend C 开源文档 3D 架构插画" />' +
+            '<img class="abh-hero-img" src="' + esc(withBase('/cann-docs-hero-layers.png')) + '" alt="Ascend C 开源文档 3D 架构插画" />' +
           '</div>' +
         '</div></div>' +
       '</section>' +
@@ -644,7 +660,7 @@
     }
     if (loadingConfig) return;
     loadingConfig = true;
-    fetch('/docs-config.json', { cache: 'no-store' })
+    fetch(withBase('/docs-config.json'), { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (cfg) {
         loadingConfig = false;
