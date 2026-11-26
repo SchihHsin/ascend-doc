@@ -56,11 +56,8 @@ jobs:
                 with open(p, "r", encoding="utf-8") as f:
                   js = f.read()
                 changed = False
-                if 'if(t=decodeURIComponent(t),t=t.replace(/\\/$/,"/index"),ve){const n="/";' in js:
-                  js = js.replace(
-                    'if(t=decodeURIComponent(t),t=t.replace(/\\/$/,"/index"),ve){const n="/";',
-                    'if(t=decodeURIComponent(t),t=t.replace(/\\/$/,"/index"),ve){const n="/ascend-doc/";'
-                  )
+                if 've){const n="/";' in js:
+                  js = js.replace('ve){const n="/";', 've){const n="/ascend-doc/";')
                   changed = True
                 if '"/assets/' in js:
                   js = js.replace('"/assets/', '"/ascend-doc/assets/')
