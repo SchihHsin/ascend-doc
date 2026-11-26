@@ -387,6 +387,81 @@
   var BASE = (location.pathname === '/ascend-doc' || location.pathname.indexOf('/ascend-doc/') === 0)
     ? '/ascend-doc'
     : '';
+  var FALLBACK_CONFIG = {
+    hero: {
+      title: 'Ascend C 开源文档',
+      subtitle: '汇聚 Ascend C 算子开发指南、SIMD/SIMT 编程模型、API 参考与跨代迁移指南，为昇腾开发者提供一站式参考。',
+      notice: '本站内容基于 Ascend C 开源文档构建，点击上方或下方搜索框可全文检索 2,700+ 篇文档正文与接口。',
+      searchPlaceholder: '搜索全站文档、API 接口、算子指南或关键字...'
+    },
+    quickTags: [
+      { label: '入门教程', href: '/guide/入门教程/Ascend-C概述与学习路径.html' },
+      { label: 'SIMD API', href: '/api/SIMD-API/SIMD-API.html' },
+      { label: 'SIMT API', href: '/api/SIMT-API/SIMT-API.html' },
+      { label: '算子实践', href: '/guide/算子实践参考/本文档组织结构.html' },
+      { label: '跨代迁移', href: '/guide/跨代迁移兼容性指南/概述.html' }
+    ],
+    categories: [
+      {
+        id: 'guide', title: '开发指南', subtitle: '从环境准备、编程模型到算子调试与调优',
+        tier: 'featured', badge: '核心开发入口', icon: 'code', accent: 'blue',
+        flowSteps: ['入门教程 (HelloWorld)', '编程指南 (SIMD / SIMT)', '算子实践 (调试与调优)'],
+        items: [
+          { title: '入门教程', tag: 'Quick Start', tagAccent: 'blue', href: '/guide/入门教程/Ascend-C概述与学习路径.html' },
+          { title: '编程指南', tag: 'SIMD / SIMT', tagAccent: 'indigo', href: '/guide/编程指南/本文档组织结构.html' },
+          { title: '算子实践参考', tag: 'Best Practice', tagAccent: 'slate', href: '/guide/算子实践参考/本文档组织结构.html' }
+        ]
+      },
+      {
+        id: 'api-ref', title: 'Ascend C API', subtitle: 'SIMD、SIMT、Utils 与 AI CPU 全栈接口参考',
+        tier: 'featured', showCount: true, icon: 'database', accent: 'indigo',
+        items: [
+          { title: 'SIMD API', href: '/api/SIMD-API/SIMD-API.html' },
+          { title: 'SIMT API', href: '/api/SIMT-API/SIMT-API.html' },
+          { title: 'Utils API', href: '/api/Utils-API/Utils-API.html' },
+          { title: 'AI CPU API', href: '/api/AI-CPU-API/AI-CPU-API.html' },
+          { title: 'Ascend C API 总览', href: '/api/Ascend-C-API列表.html', spanFullIfOdd: true }
+        ]
+      },
+      {
+        id: 'migration', title: '跨代迁移指南', tier: 'standard', badge: '2201 → 3510', icon: 'network', accent: 'sky',
+        items: [
+          { title: '跨代迁移兼容性概述', href: '/guide/跨代迁移兼容性指南/概述.html' },
+          { title: 'C++ 标准支持概述', href: '/guide/技术附录/CPP标准支持/概述.html' }
+        ]
+      },
+      {
+        id: 'appendix', title: '概念原理与技术附录', tier: 'standard', icon: 'pulse', accent: 'emerald',
+        items: [
+          { title: '异构计算原理', href: '/guide/技术附录/异构计算.html' },
+          { title: '概念原理与术语表', href: '/guide/技术附录/概念原理和术语/术语表.html' },
+          { title: 'Ascend C 开发指南总目录', href: '/guide/index.html' }
+        ]
+      },
+      {
+        id: 'api-entry', title: '接口索引与附录', tier: 'standard', badge: 'Reference', icon: 'beaker', accent: 'purple',
+        items: [
+          { title: 'Ascend C API 文档首页', href: '/api/README.html' },
+          { title: 'API 接口附录', href: '/api/附录/附录.html' }
+        ]
+      },
+      {
+        id: 'more', title: '更多文档资源', tier: 'standard', subtitle: '扩展阅读', icon: 'grid', accent: 'slate',
+        items: [{ title: '相关文档索引', href: '/guide/相关文档.html' }]
+      },
+      {
+        id: 'quick-strip', title: '高频直达', subtitle: '常用概念、接口总表与迁移入口速查',
+        tier: 'strip', badge: 'Quick Reference', icon: 'book', accent: 'amber',
+        items: [
+          { title: '学习路径与概述', href: '/guide/入门教程/Ascend-C概述与学习路径.html' },
+          { title: '编程指南结构', href: '/guide/编程指南/本文档组织结构.html' },
+          { title: 'API 列表总览', href: '/api/Ascend-C-API列表.html' },
+          { title: '术语表', href: '/guide/技术附录/概念原理和术语/术语表.html' },
+          { title: '跨代迁移指南', href: '/guide/跨代迁移兼容性指南/概述.html' }
+        ]
+      }
+    ]
+  };
   var cachedConfig = null;
   var loadingConfig = false;
 
@@ -666,12 +741,10 @@
       if (existing) existing.remove();
       return;
     }
-    if (existing) return;
-    if (cachedConfig) {
-      renderBentoRoot(cachedConfig);
-      return;
+    if (!existing) {
+      renderBentoRoot(cachedConfig || FALLBACK_CONFIG);
     }
-    if (loadingConfig) return;
+    if (cachedConfig || loadingConfig) return;
     loadingConfig = true;
     fetch(withBase('/docs-config.json'), { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : null; })
@@ -679,7 +752,11 @@
         loadingConfig = false;
         if (cfg && Array.isArray(cfg.categories)) {
           cachedConfig = cfg;
-          renderBentoRoot(cfg);
+          var cur = document.getElementById('ascend-bento-root');
+          if (cur && document.querySelector('.VPHome')) {
+            cur.remove();
+            renderBentoRoot(cfg);
+          }
         }
       })
       .catch(function () { loadingConfig = false; });
@@ -703,8 +780,7 @@
   });
 
   function startObserver() {
-    setTimeout(ensureHomeBento, 120);
-    setTimeout(ensureHomeBento, 400);
+    requestAnimationFrame(ensureHomeBento);
     var raf = null;
     var mo = new MutationObserver(function () {
       if (raf) return;
@@ -712,9 +788,9 @@
     });
     mo.observe(document.body, { childList: true, subtree: true });
   }
-  if (document.readyState === 'complete') {
-    startObserver();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startObserver, { once: true });
   } else {
-    window.addEventListener('load', startObserver, { once: true });
+    startObserver();
   }
 })();

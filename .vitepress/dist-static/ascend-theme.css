@@ -1372,6 +1372,7 @@ html.ascend-sb-animating #ascend-sb-tab {
 .Layout.home-layout .VPContent.is-home {
   padding-bottom: 0 !important;
 }
+.Layout.home-layout .VPHome,
 .VPHome.abh-replaced {
   display: none !important;
 }
