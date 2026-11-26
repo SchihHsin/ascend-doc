@@ -40,19 +40,34 @@ jobs:
 
           for root, _, files in os.walk(dst):
             for name in files:
-              if not name.endswith(".html"):
-                continue
               p = os.path.join(root, name)
-              with open(p, "r", encoding="utf-8") as f:
-                html = f.read()
-              html = html.replace('\\"base\\":\\"/\\"', '\\"base\\":\\"/ascend-doc/\\"')
-              html = html.replace('href="/assets/', 'href="/ascend-doc/assets/')
-              html = html.replace('src="/assets/', 'src="/ascend-doc/assets/')
-              html = html.replace('href="/vp-icons.css"', 'href="/ascend-doc/vp-icons.css"')
-              if "/ascend-doc/ascend-theme.css" not in html:
-                html = html.replace("</head>", head_inject + "</head>", 1)
-              with open(p, "w", encoding="utf-8") as f:
-                f.write(html)
+              if name.endswith(".html"):
+                with open(p, "r", encoding="utf-8") as f:
+                  html = f.read()
+                html = html.replace('\\"base\\":\\"/\\"', '\\"base\\":\\"/ascend-doc/\\"')
+                html = html.replace('href="/assets/', 'href="/ascend-doc/assets/')
+                html = html.replace('src="/assets/', 'src="/ascend-doc/assets/')
+                html = html.replace('href="/vp-icons.css"', 'href="/ascend-doc/vp-icons.css"')
+                if "/ascend-doc/ascend-theme.css" not in html:
+                  html = html.replace("</head>", head_inject + "</head>", 1)
+                with open(p, "w", encoding="utf-8") as f:
+                  f.write(html)
+              elif name.endswith(".js") and (os.sep + "assets") in root:
+                with open(p, "r", encoding="utf-8") as f:
+                  js = f.read()
+                changed = False
+                if 'if(t=decodeURIComponent(t),t=t.replace(/\\/$/,"/index"),ve){const n="/";' in js:
+                  js = js.replace(
+                    'if(t=decodeURIComponent(t),t=t.replace(/\\/$/,"/index"),ve){const n="/";',
+                    'if(t=decodeURIComponent(t),t=t.replace(/\\/$/,"/index"),ve){const n="/ascend-doc/";'
+                  )
+                  changed = True
+                if '"/assets/' in js:
+                  js = js.replace('"/assets/', '"/ascend-doc/assets/')
+                  changed = True
+                if changed:
+                  with open(p, "w", encoding="utf-8") as f:
+                    f.write(js)
           EOF
       - name: Setup Pages
         uses: actions/configure-pages@v5
