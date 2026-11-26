@@ -280,7 +280,10 @@
     ' stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>';
 
   function trail() {
-    var items = [{ text: '__home__', href: '/' }, { text: 'CANN社区版', href: '/' }];
+    var homeHref = (location.pathname === '/ascend-doc' || location.pathname.indexOf('/ascend-doc/') === 0)
+      ? '/ascend-doc/'
+      : '/';
+    var items = [{ text: '__home__', href: homeHref }, { text: 'CANN社区版', href: homeHref }];
     var navActive = document.querySelector('.VPNavBarMenu .VPNavBarMenuLink.active');
     if (navActive) {
       items.push({ text: navActive.textContent.trim(), href: navActive.getAttribute('href') });
@@ -681,6 +684,16 @@
       })
       .catch(function () { loadingConfig = false; });
   }
+
+  document.addEventListener('click', function (e) {
+    if (!BASE) return;
+    var a = e.target && e.target.closest ? e.target.closest('.VPLocalSearchBox a[href^="/"]') : null;
+    if (!a) return;
+    var h = a.getAttribute('href');
+    if (h && h.indexOf(BASE + '/') !== 0) {
+      a.setAttribute('href', BASE + h);
+    }
+  }, true);
 
   document.addEventListener('keydown', function (e) {
     if (e.key === '/' && document.querySelector('.VPHome') && !/INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName)) {
