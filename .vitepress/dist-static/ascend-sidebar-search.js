@@ -69,11 +69,15 @@
       ? '/ascend-doc'
       : '';
     var root = location.origin + basePrefix + '/';
-    var links = document.querySelectorAll('.VPNavBarMenu a, .VPNavScreenMenu a');
+    var links = document.querySelectorAll('.VPNavBarMenu a, .VPNavScreenMenu a, .VPLocalSearchBox a');
     for (var i = 0; i < links.length; i++) {
       var a = links[i];
       var h = a.getAttribute('href');
       if (!h || h.charAt(0) === '#' || /^[a-z]+:/i.test(h)) continue;
+      if (basePrefix && h.charAt(0) === '/' && h.indexOf(basePrefix + '/') !== 0) {
+        a.setAttribute('href', basePrefix + h);
+        continue;
+      }
       var u;
       try { u = new URL(h, root); } catch (e) { continue; }
       if (u.origin !== location.origin) continue;
@@ -632,7 +636,8 @@
       '</section>' +
       '<div class="abh-container"><div class="abh-main">' + bodyHtml + '</div></div>';
 
-    vpHome.insertBefore(root, vpHome.firstChild);
+    vpHome.classList.add('abh-replaced');
+    vpHome.parentNode.insertBefore(root, vpHome.nextSibling);
 
     var searchTrigger = document.getElementById('abh-search-trigger');
     if (searchTrigger) {
@@ -652,8 +657,13 @@
   }
 
   function ensureHomeBento() {
-    if (!document.querySelector('.VPHome')) return;
-    if (document.getElementById('ascend-bento-root')) return;
+    var vpHome = document.querySelector('.VPHome');
+    var existing = document.getElementById('ascend-bento-root');
+    if (!vpHome) {
+      if (existing) existing.remove();
+      return;
+    }
+    if (existing) return;
     if (cachedConfig) {
       renderBentoRoot(cachedConfig);
       return;
@@ -679,11 +689,19 @@
     }
   });
 
-  [0, 100, 300, 600, 1000].forEach(function (ms) { setTimeout(ensureHomeBento, ms); });
-  var raf = null;
-  var mo = new MutationObserver(function () {
-    if (raf) return;
-    raf = requestAnimationFrame(function () { raf = null; ensureHomeBento(); });
-  });
-  mo.observe(document.body, { childList: true, subtree: true });
+  function startObserver() {
+    setTimeout(ensureHomeBento, 120);
+    setTimeout(ensureHomeBento, 400);
+    var raf = null;
+    var mo = new MutationObserver(function () {
+      if (raf) return;
+      raf = requestAnimationFrame(function () { raf = null; ensureHomeBento(); });
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+  }
+  if (document.readyState === 'complete') {
+    startObserver();
+  } else {
+    window.addEventListener('load', startObserver, { once: true });
+  }
 })();

@@ -1372,11 +1372,7 @@ html.ascend-sb-animating #ascend-sb-tab {
 .Layout.home-layout .VPContent.is-home {
   padding-bottom: 0 !important;
 }
-.VPHome:has(#ascend-bento-root) {
-  padding-bottom: 0 !important;
-  margin-bottom: 0 !important;
-}
-.VPHome:has(#ascend-bento-root) > :not(#ascend-bento-root) {
+.VPHome.abh-replaced {
   display: none !important;
 }
 #ascend-bento-root {
