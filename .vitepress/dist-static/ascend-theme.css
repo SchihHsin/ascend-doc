@@ -1442,6 +1442,16 @@ html.ascend-sb-animating #ascend-sb-tab {
   flex-shrink: 0;
   color: #94A3B8;
 }
+.abh-hero-notice a {
+  color: #0052D9;
+  font-weight: 500;
+  text-decoration: none;
+  margin: 0 2px;
+}
+.abh-hero-notice a:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 .abh-search-btn {
   display: flex;
   align-items: center;

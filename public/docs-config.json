@@ -2,7 +2,7 @@
   "hero": {
     "title": "Ascend C 开源文档",
     "subtitle": "汇聚 Ascend C 算子开发指南、SIMD/SIMT 编程模型、API 参考与跨代迁移指南，为昇腾开发者提供一站式参考。",
-    "notice": "本站内容基于 Ascend C 开源文档构建，点击上方或下方搜索框可全文检索 2,700+ 篇文档正文与接口。",
+    "noticeHtml": "本站内容基于<a href=\"https://gitee.com/ascend/CANN\" target=\"_blank\" rel=\"noopener\">CANN开源社区</a>master分支的文档自动编译生成，属于持续开发版本，可能存在缺陷，仅供预览与参考。如需稳定发布文档，请查阅<a href=\"https://support.huawei.com/enterprise/zh/cann\" target=\"_blank\" rel=\"noopener\">昇腾社区-CANN产品文档</a>。",
     "searchPlaceholder": "搜索全站文档、API 接口、算子指南或关键字..."
   },
   "quickTags": [

@@ -391,7 +391,7 @@
     hero: {
       title: 'Ascend C 开源文档',
       subtitle: '汇聚 Ascend C 算子开发指南、SIMD/SIMT 编程模型、API 参考与跨代迁移指南，为昇腾开发者提供一站式参考。',
-      notice: '本站内容基于 Ascend C 开源文档构建，点击上方或下方搜索框可全文检索 2,700+ 篇文档正文与接口。',
+      noticeHtml: '本站内容基于<a href="https://gitee.com/ascend/CANN" target="_blank" rel="noopener">CANN开源社区</a>master分支的文档自动编译生成，属于持续开发版本，可能存在缺陷，仅供预览与参考。如需稳定发布文档，请查阅<a href="https://support.huawei.com/enterprise/zh/cann" target="_blank" rel="noopener">昇腾社区-CANN产品文档</a>。',
       searchPlaceholder: '搜索全站文档、API 接口、算子指南或关键字...'
     },
     quickTags: [
@@ -679,7 +679,7 @@
           '<div class="abh-hero-copy">' +
             '<h1 class="abh-hero-title">' + esc(hero.title || 'Ascend C 开源文档') + '</h1>' +
             '<p class="abh-hero-sub">' + esc(hero.subtitle || '') + '</p>' +
-            (hero.notice ? '<p class="abh-hero-notice"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span>' + esc(hero.notice) + '</span></p>' : '') +
+            ((hero.noticeHtml || hero.notice) ? '<p class="abh-hero-notice"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span>' + (hero.noticeHtml || esc(hero.notice)) + '</span></p>' : '') +
             '<button type="button" id="abh-search-trigger" class="abh-search-btn">' +
               '<span class="abh-search-left">' +
                 '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>' +
